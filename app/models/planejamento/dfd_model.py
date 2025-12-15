@@ -1,6 +1,7 @@
 from datetime import date
 from sqlalchemy import String, Integer, ForeignKey, Text, Boolean, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 from app.core.database import Base
 
 class DFD(Base):

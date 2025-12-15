@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Mount sql dumps to init db automatically on first run
       # Note: execution order is alphabetical.
-      - ./sistemas/banco_de_dados:/docker-entrypoint-initdb.d
+      #- ./sistemas/banco_de_dados:/docker-entrypoint-initdb.d
     networks:
       - planeja_net
 

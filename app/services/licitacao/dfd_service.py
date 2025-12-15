@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.repositories.licitacao.dfd import DFDRepository
 from app.repositories.licitacao.item_dfd import ItemDFDRepository
 from app.schemas.licitacao import DFDCreate, ItemDFDCreate, AFDUpdate
-from app.models.licitacao import DFD, ItemDFD
+from app.models import DFD, ItemDFD
 
 class DFDService:
     def __init__(self):

@@ -1,6 +1,6 @@
 from datetime import date
 from sqlalchemy import String, Integer, Boolean, ForeignKey, TIMESTAMP
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash
 from app.core.database import Base

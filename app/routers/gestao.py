@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.models import gestao as models
-from app.models import licitacao as licitacao_models
+from app.core.database import get_db
+from app import models
 from app.schemas import gestao as schemas
 
 router = APIRouter(prefix="/gestao", tags=["gestao"])
@@ -39,7 +39,7 @@ def read_instrumentos(db: Session = Depends(get_db)):
 @router.post("/contratos/", response_model=schemas.Contrato)
 def create_contrato(contrato: schemas.ContratoCreate, db: Session = Depends(get_db)):
     # 1. Validate Process exists
-    db_processo = db.query(licitacao_models.ProcessoLicitatorio).filter(licitacao_models.ProcessoLicitatorio.id == contrato.id_processo_licitatorio).first()
+    db_processo = db.query(models.ProcessoLicitatorio).filter(models.ProcessoLicitatorio.id == contrato.id_processo_licitatorio).first()
     if not db_processo:
         raise HTTPException(status_code=404, detail="Processo Licitatório not found")
 
@@ -85,7 +85,7 @@ def read_contratos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
 # --- AOCS ---
 @router.post("/aocs/", response_model=schemas.AOCS)
 def create_aocs(aocs: schemas.AOCSCreate, db: Session = Depends(get_db)):
-    db_aocs = models.AOCS(**aocs.model_dump())
+    db_aocs = models.Aocs(**aocs.model_dump())
     db.add(db_aocs)
     db.commit()
     db.refresh(db_aocs)
@@ -93,4 +93,4 @@ def create_aocs(aocs: schemas.AOCSCreate, db: Session = Depends(get_db)):
 
 @router.get("/aocs/", response_model=List[schemas.AOCS])
 def read_aocs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return db.query(models.AOCS).offset(skip).limit(limit).all()
+    return db.query(models.Aocs).offset(skip).limit(limit).all()

@@ -1,5 +1,5 @@
 from app.repositories.base import BaseRepository
-from app.models.licitacao import ProcessoLicitatorio
+from app.models import ProcessoLicitatorio
 
 class ProcessoRepository(BaseRepository[ProcessoLicitatorio]):
     def __init__(self):

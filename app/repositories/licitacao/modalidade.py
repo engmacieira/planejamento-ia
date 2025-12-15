@@ -1,5 +1,5 @@
 from app.repositories.base import BaseRepository
-from app.models.licitacao import Modalidade
+from app.models import Modalidade
 
 class ModalidadeRepository(BaseRepository[Modalidade]):
     def __init__(self):

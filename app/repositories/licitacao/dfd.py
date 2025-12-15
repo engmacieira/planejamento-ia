@@ -1,5 +1,5 @@
 from app.repositories.base import BaseRepository
-from app.models.licitacao import DFD
+from app.models import DFD
 
 class DFDRepository(BaseRepository[DFD]):
     def __init__(self):

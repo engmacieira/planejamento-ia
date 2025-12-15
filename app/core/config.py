@@ -1,9 +1,23 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    # App Metadata
+    PROJECT_NAME: str = "LicitaFlow API"
+    API_V1_STR: str = "/api/v1"
+
     # Definimos aqui EXATAMENTE o que tem no seu .env
     DB_URL: str
     SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # Email Settings (Legacy compatibility & Future use)
+    EMAIL_HOST: str | None = None
+    EMAIL_PORT: int | None = 587
+    EMAIL_USER: str | None = None
+    EMAIL_PASSWORD: str | None = None
+    EMAIL_FROM: str | None = None
+    
     # Opcional (None) caso você ainda não tenha colocado, para não quebrar
     GEMINI_API_KEY: str | None = None 
     

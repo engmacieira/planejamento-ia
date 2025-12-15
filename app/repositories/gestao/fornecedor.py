@@ -1,5 +1,5 @@
 from app.repositories.base import BaseRepository
-from app.models.gestao.fornecedor import Fornecedor
+from app.models import Fornecedor
 
 class FornecedorRepository(BaseRepository[Fornecedor]):
     def __init__(self):

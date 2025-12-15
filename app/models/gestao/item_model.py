@@ -3,7 +3,7 @@ from sqlalchemy import ForeignKey, String, Integer, Boolean, Numeric, Computed
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
-class Item(Base): # Keeping class name Item or ItensContrato? Prompt said "Refine os Models ... preservando nomenclatura de arquivos". Class name usually matches file but PascalCase. preserving logic means preserving imports content maybe? The file is item_model.py. Class Item is fine.
+class ItemContrato(Base): # Renamed from Item for clarity/consistency
     __tablename__ = "itens_contrato"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
