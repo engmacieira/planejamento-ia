@@ -1,0 +1,42 @@
+from datetime import date
+from decimal import Decimal
+from sqlalchemy import ForeignKey, String, Integer, Boolean, Date, Numeric, TIMESTAMP
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+from app.core.database import Base
+
+class Contrato(Base): 
+    __tablename__ = "contratos"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    
+    # Identificação do Contrato
+    numero_contrato: Mapped[int] = mapped_column(Integer)
+    ano_contrato: Mapped[int] = mapped_column(Integer)
+    
+    # Hierarquia: Processo Licitatório
+    # Aponta para tabela processos_licitatorios
+    id_processo_licitatorio: Mapped[int] = mapped_column(ForeignKey("processos_licitatorios.id"))
+    
+    # A Modalidade Específica
+    id_numero_modalidade: Mapped[int] = mapped_column(ForeignKey("numeros_modalidade.id"))
+    
+    # Quem?
+    id_fornecedor: Mapped[int] = mapped_column(ForeignKey("fornecedores.id"))
+    fornecedor: Mapped["Fornecedor"] = relationship("Fornecedor", back_populates="contratos", lazy="selectin")
+    
+    # Classificação
+    # Nota: SQL referencia 'instrumentocontratual' (singular, tudo junto)
+    id_instrumento_contratual: Mapped[int | None] = mapped_column(ForeignKey("instrumentocontratual.id"), nullable=True)
+    
+    # Vigência
+    data_assinatura: Mapped[date] = mapped_column(Date)
+    data_inicio_vigencia: Mapped[date] = mapped_column(Date)
+    data_fim_vigencia: Mapped[date] = mapped_column(Date)
+    
+    valor_total: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), default=0)
+    
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True)
+    data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
+
+    # Placeholder para métodos de domínio (transpostos do legado se existissem)

@@ -1,0 +1,18 @@
+from datetime import date
+from sqlalchemy import Integer, ForeignKey, TIMESTAMP
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+from app.core.database import Base
+
+class NumeroModalidade(Base):
+    __tablename__ = "numeros_modalidade"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    
+    id_modalidade: Mapped[int] = mapped_column(ForeignKey("modalidade.id"))
+    modalidade: Mapped["Modalidade"] = relationship("Modalidade", lazy="selectin")
+    
+    numero: Mapped[int] = mapped_column(Integer)
+    ano: Mapped[int] = mapped_column(Integer)
+    
+    data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
