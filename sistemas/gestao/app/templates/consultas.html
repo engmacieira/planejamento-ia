@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Consultas Avançadas - GestãoPRO{% endblock %}
+
+{% block content %}
+<header class="main-header">
+    <h1>Consultas Avançadas</h1>
+    <p class="subtitle">Encontre contratos ou pedidos com base em seus vínculos no sistema.</p>
+</header>
+
+{% include '_consultas_form.html' %}
+
+<div id="area-resultados" style="margin-top: 30px;">
+    <div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><h2>Aguardando sua consulta</h2><p>Selecione um tipo de consulta e um valor para buscar os resultados.</p></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    const configEntidades = {{ entidades_pesquisaveis | tojson }};
+</script>
+<script src="{{ request.app.url_path_for('static', path='js/consultas.js') }}" defer></script>
+{% endblock %}

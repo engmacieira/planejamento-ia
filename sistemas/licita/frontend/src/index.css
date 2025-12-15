@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Fonte padrão moderna e limpa */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* Força o tema claro base (coerente com o Dashboard) */
+  color-scheme: light;
+  color: #111827; /* gray-900 */
+  background-color: #f9fafb; /* gray-50 */
+
+  /* Otimizações de renderização de texto */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* Removemos o display: flex e place-items: center que centralizava tudo */
+}
+
+/* Removemos estilos globais de h1, button e a para não brigar com o Tailwind */
