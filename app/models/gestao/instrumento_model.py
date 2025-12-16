@@ -5,7 +5,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 class InstrumentoContratual(Base):
-    __tablename__ = "instrumentos_contratuais"
+    __tablename__ = "instrumentocontratual"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     nome: Mapped[str] = mapped_column(String(100), unique=True)

@@ -3,19 +3,21 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: planejamento_ia_db
+    # Mudei o nome para garantir que não colida com o antigo
+    container_name: planejamento_ia_db_clean
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
-      POSTGRES_DB: ${POSTGRES_DB:-planejamento_ia}
+      # MUDANÇA CRÍTICA: Nome novo para o banco nascer do zero
+      POSTGRES_DB: erp_novo_db
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      # Mount sql dumps to init db automatically on first run
-      # Note: execution order is alphabetical.
-      #- ./sistemas/banco_de_dados:/docker-entrypoint-initdb.d
+      # Volume novo e vazio
+      - postgres_data_clean:/var/lib/postgresql/data
+      # 🚫 BLOQUEADO: Isso impedia o reset real. Não descomente!
+      # - ./sistemas/banco_de_dados:/docker-entrypoint-initdb.d
     networks:
       - planeja_net
 
@@ -24,4 +26,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  # Declaração do volume novo
+  postgres_data_clean:

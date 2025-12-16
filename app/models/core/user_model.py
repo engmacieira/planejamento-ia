@@ -10,7 +10,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     
-    id_perfil: Mapped[int] = mapped_column(ForeignKey("perfis.id")) # Assuming perfis table exists
+    id_perfil: Mapped[int | None] = mapped_column(ForeignKey("perfis.id"), nullable=True) # Assuming perfis table exists
     
     username: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)

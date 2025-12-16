@@ -18,6 +18,8 @@ class DFD(Base):
     
     unidade_requisitante_id: Mapped[int] = mapped_column(ForeignKey("unidades_requisitantes.id"))
     unidade_requisitante: Mapped["Unidade"] = relationship("Unidade", lazy="selectin")
+
+    etp_id: Mapped[int | None] = mapped_column(ForeignKey("etps.id"), nullable=True)
     
     # Responsavel not in dfd.sql? Checking SQL content again.
     # dfd.sql lines 1-19 do NOT show responsavel_id or etp_id.
@@ -30,6 +32,7 @@ class DFD(Base):
     
     data_criacao: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     status: Mapped[str | None] = mapped_column(String(50), default='Rascunho')
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     itens: Mapped[list["ItemDFD"]] = relationship("ItemDFD", back_populates="dfd", cascade="all, delete-orphan")
     equipe: Mapped[list["DFDEquipe"]] = relationship("DFDEquipe", back_populates="dfd")

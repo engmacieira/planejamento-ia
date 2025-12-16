@@ -29,7 +29,9 @@ class DFDBase(BaseModel):
     id_unidade_requisitante: int
 
 class DFDCreate(DFDBase):
-    pass
+    itens: List[ItemDFDCreate] = []
+    equipe: List[dict] = [] # Simplification as EquipeSchema not fully known/imported here yet, or use ItemDFDCreate logic
+    dotacoes: List[dict] = []
 
 class AFDUpdate(BaseModel):
     status: str

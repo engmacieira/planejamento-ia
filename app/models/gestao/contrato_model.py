@@ -4,6 +4,8 @@ from sqlalchemy import ForeignKey, String, Integer, Boolean, Date, Numeric, TIME
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+# Imports for string forward references are not strictly needed at runtime if using "ClassName" string, but good for clarity or TYPE_CHECKING
+# Keeping it simple with string refs as used in relationship arguments.
 
 class Contrato(Base): 
     __tablename__ = "contratos"
@@ -13,6 +15,7 @@ class Contrato(Base):
     # Identificação do Contrato
     numero_contrato: Mapped[int] = mapped_column(Integer)
     ano_contrato: Mapped[int] = mapped_column(Integer)
+    objeto: Mapped[str | None] = mapped_column(String(255), nullable=True)
     
     # Hierarquia: Processo Licitatório
     # Aponta para tabela processos_licitatorios
@@ -26,9 +29,19 @@ class Contrato(Base):
     fornecedor: Mapped["Fornecedor"] = relationship("Fornecedor", back_populates="contratos", lazy="selectin")
     
     # Classificação
+    # Classificação
     # Nota: SQL referencia 'instrumentocontratual' (singular, tudo junto)
     id_instrumento_contratual: Mapped[int | None] = mapped_column(ForeignKey("instrumentocontratual.id"), nullable=True)
-    
+    instrumento_contratual: Mapped["InstrumentoContratual"] = relationship("InstrumentoContratual", lazy="selectin")
+
+    id_categoria: Mapped[int | None] = mapped_column(ForeignKey("categorias.id"), nullable=True)
+    categoria: Mapped["Categoria"] = relationship("Categoria", lazy="selectin")
+
+    # Modalidade Generic (if used separate from NumeroModalidade or just redundancy?)
+    # Repo sets id_modalidade.
+    id_modalidade: Mapped[int | None] = mapped_column(ForeignKey("modalidades.id"), nullable=True)
+    modalidade: Mapped["Modalidade"] = relationship("Modalidade", lazy="selectin")
+
     # Vigência
     data_assinatura: Mapped[date] = mapped_column(Date)
     data_inicio_vigencia: Mapped[date] = mapped_column(Date)
@@ -38,5 +51,3 @@ class Contrato(Base):
     
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
-
-    # Placeholder para métodos de domínio (transpostos do legado se existissem)

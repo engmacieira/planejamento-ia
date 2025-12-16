@@ -4,6 +4,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
+# Importe os modelos relacionados para evitar erros de referência cruzada, se necessário
+# from app.models.core.unidade_model import Unidade (Opcional, o SQLAlchemy resolve string, mas o import ajuda)
+
 class Aocs(Base):
     __tablename__ = "aocs"
 
@@ -16,16 +19,16 @@ class Aocs(Base):
     
     data_emissao: Mapped[date] = mapped_column(Date, default=func.current_date())
     
-    # Foreign Keys
-    id_unidade_requisitante: Mapped[int] = mapped_column(ForeignKey("unidadesrequisitantes.id"))
+    # CORREÇÃO AQUI 👇 (unidades_requisitantes)
+    id_unidade_requisitante: Mapped[int] = mapped_column(ForeignKey("unidades_requisitantes.id"))
     
     id_solicitante: Mapped[int | None] = mapped_column(ForeignKey("agentes_responsaveis.id"), nullable=True)
     id_agente_responsavel: Mapped[int | None] = mapped_column(ForeignKey("agentes_responsaveis.id"), nullable=True)
     
-    # Relacionamentos com Agente
+    # Relacionamentos
+    # Dica: 'Agente' precisa estar importado ou disponível no registry
     solicitante: Mapped["Agente"] = relationship("Agente", foreign_keys=[id_solicitante], lazy="selectin")
     agente_responsavel: Mapped["Agente"] = relationship("Agente", foreign_keys=[id_agente_responsavel], lazy="selectin")
-    
     
     id_local_entrega: Mapped[int | None] = mapped_column(ForeignKey("locais_entrega.id"), nullable=True)
     id_dotacao: Mapped[int | None] = mapped_column(ForeignKey("dotacao.id"), nullable=True)
@@ -36,5 +39,3 @@ class Aocs(Base):
     justificativa: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
-
-    # placeholder for domain methods

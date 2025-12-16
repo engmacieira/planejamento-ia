@@ -16,7 +16,7 @@ class ItensAocs(Base):
     aocs: Mapped["Aocs"] = relationship("Aocs", lazy="selectin")
     
     id_item_contrato: Mapped[int] = mapped_column(ForeignKey("itens_contrato.id"))
-    item_contrato: Mapped["Item"] = relationship("Item", lazy="selectin") # Assuming Item maps to itens_contrato
+    item_contrato: Mapped["ItemContrato"] = relationship("ItemContrato", lazy="selectin") # Assuming Item maps to itens_contrato
     
     quantidade_solicitada: Mapped[Decimal] = mapped_column(Numeric(15, 3))
     

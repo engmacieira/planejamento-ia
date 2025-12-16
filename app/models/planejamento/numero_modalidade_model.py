@@ -9,7 +9,7 @@ class NumeroModalidade(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     
-    id_modalidade: Mapped[int] = mapped_column(ForeignKey("modalidade.id"))
+    id_modalidade: Mapped[int] = mapped_column(ForeignKey("modalidades.id"))
     modalidade: Mapped["Modalidade"] = relationship("Modalidade", lazy="selectin")
     
     numero: Mapped[int] = mapped_column(Integer)

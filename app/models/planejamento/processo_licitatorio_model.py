@@ -11,12 +11,12 @@ class ProcessoLicitatorio(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     
     # Vínculo com a Origem
-    id_dfd: Mapped[int] = mapped_column(ForeignKey("dfd.id")) # Assuming dfd table exists or will be created
+    id_dfd: Mapped[int] = mapped_column(ForeignKey("dfds.id")) # Assuming dfd table exists or will be created
     
     numero_processo: Mapped[int] = mapped_column(Integer)
     ano_processo: Mapped[int] = mapped_column(Integer)
     
-    id_modalidade: Mapped[int] = mapped_column(ForeignKey("modalidade.id"))
+    id_modalidade: Mapped[int] = mapped_column(ForeignKey("modalidades.id"))
     id_numero_modalidade: Mapped[int | None] = mapped_column(ForeignKey("numeros_modalidade.id"), nullable=True)
     
     objeto: Mapped[str] = mapped_column(Text)

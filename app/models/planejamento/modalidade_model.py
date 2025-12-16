@@ -5,7 +5,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 class Modalidade(Base):
-    __tablename__ = "modalidade"
+    __tablename__ = "modalidades"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     
