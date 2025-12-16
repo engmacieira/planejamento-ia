@@ -1,7 +1,5 @@
 import pytest
 from app.repositories.planejamento.dfd_repository import DFDRepository
-from app.schemas.licitacao import DFDCreate # Correct schema import if needed, assuming DFDCreate is in planejamento.dfd_schema actually? User path says schemas.licitacao in old test but repo uses app.schemas.planejamento.dfd_schema
-# Correcting schema import based on DFDRepository file:
 from app.schemas.planejamento.dfd_schema import DFDCreate
 from app.models.planejamento.dfd_model import DFD
 

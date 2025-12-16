@@ -3,26 +3,26 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 import logging
 
-from app.models.gestao.local_model import LocalEntrega
+from app.models.gestao.local_model import Local
 from app.schemas.gestao.local_schema import LocalRequest
 from app.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
-class LocalRepository(BaseRepository[LocalEntrega, LocalRequest, LocalRequest]):
+class LocalRepository(BaseRepository[Local, LocalRequest, LocalRequest]):
     def __init__(self, db_session: AsyncSession):
-        super().__init__(LocalEntrega, db_session)
+        super().__init__(Local, db_session)
 
-    async def get_by_nome(self, nome: str) -> LocalEntrega | None:
+    async def get_by_nome(self, nome: str) -> Local | None:
         try:
-            query = select(LocalEntrega).where(LocalEntrega.nome == nome)
+            query = select(Local).where(Local.nome == nome)
             result = await self.db_session.execute(query)
             return result.scalars().first()
         except Exception as e:
              logger.exception(f"Erro ao buscar local de entrega por nome '{nome}': {e}")
              return None
 
-    async def get_or_create(self, nome: str) -> LocalEntrega:
+    async def get_or_create(self, nome: str) -> Local:
         try:
             local = await self.get_by_nome(nome)
             if local:

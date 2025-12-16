@@ -75,3 +75,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     #     raise credentials_exception
     # return user
     return username # Temporary return until Repo is linked
+
+def require_access_level(level: int):
+    """
+    Dependency factory to check if the current user has the required access level.
+    TODO: Implement actual level check against User model.
+    """
+    def check_access(current_user: any = Depends(get_current_user)):
+        # Logic to check user level would go here
+        # if current_user.level < level: raise ...
+        return current_user
+    return check_access

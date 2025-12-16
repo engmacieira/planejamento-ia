@@ -1,78 +1,96 @@
+from typing import AsyncGenerator
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
+from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core import security
 from app.core.config import settings
-from app.core.security import ALGORITHM, SECRET_KEY, oauth2_scheme
+from app.core.database import SessionLocal
 from app.models.core.user_model import User
+from app.repositories.core.user_repository import UserRepository
 
-# TODO: Import Repositories and Services when they are migrated
-# from app.repositories.user_repository import UserRepository
-# from app.repositories.template_repository import TemplateRepository
-# from app.repositories.log_repository import LogRepository
-# from app.services.file_service import FileService 
-# from app.services.document_service import DocumentService
-# from app.services.zip_service import ZipService
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token"
+)
 
-# Mock classes for dependencies that don't exist yet to prevent ImportErrors
 class MockService:
-    def __init__(self, name): self.name = name
+    """
+    Classe placeholder para evitar o erro 'MockService não está definido'.
+    Isso mantém a compatibilidade com funções antigas que você pediu para não remover.
+    """
+    def __init__(self, service_name: str):
+        self.service_name = service_name
 
-# --- Repository Injectors (Stubs) ---
-# def get_user_repo(db: Session = Depends(get_db)) -> UserRepository:
-#     return UserRepository(db)
+    async def execute(self, *args, **kwargs):
+        return {"message": f"Service {self.service_name} called (Mock)"}
 
-# def get_template_repo(db: Session = Depends(get_db)) -> TemplateRepository:
-#     return TemplateRepository(db)
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Cria uma sessão assíncrona com o banco e garante o fechamento.
+    """
+    async with SessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
-# def get_log_repo(db: Session = Depends(get_db)) -> LogRepository:
-#     return LogRepository(db)
+async def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
+    return UserRepository(session)
 
-# --- Service Injectors (Stubs) ---
 def get_file_service():
-    """Injeta a instância do serviço de arquivos (Stub)."""
     return MockService("FileService")
 
 def get_document_service():
-    """Injeta a instância do serviço de leitura de documentos Word (Stub)."""
     return MockService("DocumentService")
 
 def get_zip_service():
     return MockService("ZipService")
 
-# --- Auth Dependency ---
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
+async def get_current_user(
+    session: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+) -> User:
     """
-    Validates token and returns current user.
-    WARNING: Currently returns only the extracted email/username string 
-    because UserRepository is not yet available in app/repositories.
+    Valida o token JWT e retorna o objeto User do banco de dados.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Credenciais inválidas ou expiradas",
+        detail="Credenciais não puderam ser validadas",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
     try:
-        # 1. Tenta decodificar o token
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_sub = payload.get("sub")
+        
+        if token_sub is None:
             raise credentials_exception
-    except JWTError:
+            
+        user_id = int(token_sub)
+        
+    except (JWTError, ValidationError, ValueError):
         raise credentials_exception
+
+    repo = UserRepository(session)
+    user = await repo.get_by_id(user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
-    # 2. Busca o usuário no banco (TODO: Uncomment when Repo is ready)
-    # repo = UserRepository(db)
-    # user = repo.get_by_email(email=username) # OR get_by_username depending on model
-    
-    # if user is None:
-    #     raise credentials_exception
-    
-    # return user
-    return {"username": username, "msg": "User object pending Repo migration"}
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Usuário inativo")
+        
+    return user
+
+async def get_current_active_superuser(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=400, detail="O usuário não tem privilégios suficientes"
+        )
+    return current_user

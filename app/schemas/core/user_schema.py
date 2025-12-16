@@ -10,6 +10,8 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+UserCreateRequest = UserCreate
+
 # Response: O que devolvemos (NÃO tem senha, tem ID e datas)
 class UserResponse(UserBase):
     id: int
@@ -17,3 +19,7 @@ class UserResponse(UserBase):
     
     # Configuração V2 para ler do ORM (SQLAlchemy)
     model_config = ConfigDict(from_attributes=True)
+
+class UserChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str

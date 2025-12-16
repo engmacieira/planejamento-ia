@@ -6,6 +6,9 @@ from app.core.database import Base
 from app.core.security import get_password_hash
 # Import models to ensure they are registered with Base
 import app.models 
+from httpx import AsyncClient
+from app.core.security import create_access_token
+from app.main import app 
 
 # Use Async SQLite in-memory
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -82,3 +85,20 @@ async def sample_unidade(db_session):
     await db_session.commit()
     await db_session.refresh(unidade)
     return unidade
+    return unidade
+
+@pytest.fixture(scope="function")
+async def client(db_session):
+    """
+    Creates an AsyncClient for integration tests.
+    """
+    async with AsyncClient(app=app, base_url="http://test") as c:
+        yield c
+
+@pytest.fixture(scope="function")
+async def usuario_normal_token(db_session, sample_user):
+    """
+    Returns a valid access token for the sample_user.
+    """
+    access_token = create_access_token(data={"sub": sample_user.email})
+    return {"Authorization": f"Bearer {access_token}"}
