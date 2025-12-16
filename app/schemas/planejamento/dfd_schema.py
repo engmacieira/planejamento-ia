@@ -34,6 +34,10 @@ class DFDDotacaoResponse(DFDDotacaoBase):
 
 # --- DFD PRINCIPAL ---
 class DFDBase(BaseModel):
+    # CORREÇÃO CRUCIAL: populate_by_name=True
+    # Permite entrada via JSON ('objeto') E leitura via Banco ('descricao_sucinta')
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     # Campos base compartilhados
     numero: Optional[int] = None
     numero_protocolo_string: Optional[str] = None
@@ -42,24 +46,31 @@ class DFDBase(BaseModel):
     unidade_requisitante_id: int 
     responsavel_id: int
     
-    objeto: Optional[str] = None
-    justificativa: Optional[str] = None
+    # Mapeamento Híbrido:
+    # validation_alias="...": Ensina a ler do Banco de Dados
+    # O nome do campo (objeto): É usado no JSON da API
+    objeto: Optional[str] = Field(None, validation_alias="descricao_sucinta")
+    justificativa: Optional[str] = Field(None, validation_alias="justificativa_necessidade")
+    
     contratacao_vinculada: bool = False
     data_contratacao: Optional[str] = None
     etp_id: Optional[int] = None
 
 # Criação
 class DFDCreate(DFDBase):
-    objeto: str
-    justificativa: str
+    # Redefinimos para tornar obrigatório na criação, mantendo o alias da base
+    objeto: str = Field(..., validation_alias="descricao_sucinta")
+    justificativa: str = Field(..., validation_alias="justificativa_necessidade")
+    
     # Listas Obrigatórias (podem ser vazias)
     itens: List[DFDItemBase]
     equipe: List[DFDEquipeBase]
     dotacoes: List[DFDDotacaoBase]
 
-# Atualização (Onde estava o problema)
+# Atualização
 class DFDUpdate(BaseModel):
-    # Permitimos atualizar TUDO que é editável
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     numero: Optional[int] = None
     numero_protocolo_string: Optional[str] = None
     ano: Optional[int] = None
@@ -68,11 +79,9 @@ class DFDUpdate(BaseModel):
     unidade_requisitante_id: Optional[int] = None
     responsavel_id: Optional[int] = None
     
-    objeto: Optional[str] = None
-    justificativa: Optional[str] = None
+    objeto: Optional[str] = Field(None, validation_alias="descricao_sucinta")
+    justificativa: Optional[str] = Field(None, validation_alias="justificativa_necessidade")
     
-    # --- A CORREÇÃO ESTÁ AQUI ---
-    # Agora o Schema aceita receber as listas na atualização
     itens: Optional[List[DFDItemBase]] = None
     equipe: Optional[List[DFDEquipeBase]] = None
     dotacoes: Optional[List[DFDDotacaoBase]] = None
@@ -80,15 +89,16 @@ class DFDUpdate(BaseModel):
 # Leitura (Resposta)
 class DFDResponse(DFDBase):
     id: int
-    is_active: bool
-    status: Optional[str] = "Rascunho" # Garante que o status vá para o front
-    created_at: Optional[datetime] = None # O front usa para mostrar a data
+    is_active: bool = Field(validation_alias="ativo", default=True)
+    status: Optional[str] = "Rascunho" 
+    created_at: Optional[datetime] = Field(None, validation_alias="data_criacao") 
+    
     unidade_requisitante: Optional[UnidadeRequisitanteResponse] = None
     itens: List[DFDItemResponse] = []
     equipe: List[DFDEquipeResponse] = []
     dotacoes: List[DFDDotacaoResponse] = []
     
-    model_config = ConfigDict(from_attributes=True)
+    # Herda o ConfigDict do DFDBase, então já tem from_attributes e populate_by_name
 
 # Atualização de Preço em Lote
 class DFDItemUpdatePrice(BaseModel):

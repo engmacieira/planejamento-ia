@@ -191,13 +191,15 @@ async def sample_modalidade(db_session):
     return mod
 
 @pytest.fixture(scope="function")
-async def sample_dfd(db_session, sample_unidade):
+async def sample_dfd(db_session, sample_unidade, sample_user):
     """Cria um DFD pai para o processo licitatório."""
     dfd = DFD(
         numero=1,
         ano=2024,
         descricao_sucinta="DFD Teste",
-        unidade_requisitante_id=sample_unidade.id, # Nome do campo corrigido (era id_unidade...)
+        unidade_requisitante_id=sample_unidade.id,
+        responsavel_id=sample_user.id,
+        data_req=date.today(),
         status="Rascunho",
         is_active=True
     )

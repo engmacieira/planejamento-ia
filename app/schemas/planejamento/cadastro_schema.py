@@ -10,7 +10,8 @@ class UnidadeRequisitanteBase(BaseModel):
 
 class UnidadeRequisitanteResponse(UnidadeRequisitanteBase):
     id: int
-    is_active: bool
+    # CORREÇÃO: Mapeia 'ativo' (banco) para 'is_active' (schema)
+    is_active: bool = Field(validation_alias="ativo") 
     model_config = ConfigDict(from_attributes=True)
 
 # --- Agente Responsável ---
@@ -23,15 +24,15 @@ class AgenteResponsavelBase(BaseModel):
 
 class AgenteResponsavelResponse(AgenteResponsavelBase):
     id: int
-    is_active: bool
+    # CORREÇÃO: Mapeia 'ativo' (banco) para 'is_active' (schema)
+    is_active: bool = Field(validation_alias="ativo")
     model_config = ConfigDict(from_attributes=True)
 
 # --- Item Catalogo (Unificado) ---
 class ItemCatalogoBase(BaseModel):
     codigo: Optional[str] = None
     
-    # AQUI ESTÁ A CORREÇÃO MÁGICA:
-    # Mapeamos 'nome_item' (do banco) para 'nome' (do schema/frontend)
+    # Mapeia 'nome_item' (do banco) para 'nome' (do schema/frontend)
     nome: str = Field(validation_alias="nome_item")
     
     descricao: Optional[str] = None
@@ -47,16 +48,20 @@ class ItemCatalogoCreate(ItemCatalogoBase):
 
 class ItemCatalogoResponse(ItemCatalogoBase):
     id: int
-    is_active: bool
-    # model_config herdado da Base
+    # CORREÇÃO: Mapeia 'ativo' (banco) para 'is_active' (schema)
+    is_active: bool = Field(validation_alias="ativo")
+    model_config = ConfigDict(from_attributes=True)
 
-# --- Dotação (Simples) ---
+# --- Dotação Orçamentária ---
 class DotacaoBase(BaseModel):
-    numero: str
-    nome: str      
-    exercicio: int 
+    ano: int
+    codigo: str
+    descricao: str
+    valor_total: float = 0.0
+    valor_disponivel: float = 0.0
 
 class DotacaoResponse(DotacaoBase):
     id: int
-    is_active: bool = True
+    # CORREÇÃO: Mapeia 'ativo' (banco) para 'is_active' (schema)
+    is_active: bool = Field(validation_alias="ativo")
     model_config = ConfigDict(from_attributes=True)

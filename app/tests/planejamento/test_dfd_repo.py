@@ -1,4 +1,5 @@
 import pytest
+from datetime import date
 from app.repositories.planejamento.dfd_repository import DFDRepository
 from app.schemas.planejamento.dfd_schema import DFDCreate
 from app.models.planejamento.dfd_model import DFD
@@ -38,7 +39,7 @@ async def test_create_dfd_complete(db_session, sample_unidade):
     assert created_dfd.unidade_requisitante_id == sample_unidade.id
 
 @pytest.mark.asyncio
-async def test_get_dfd_by_id(db_session, sample_unidade):
+async def test_get_dfd_by_id(db_session, sample_unidade, sample_user): # <-- Adicionar sample_user
     repo = DFDRepository(db_session)
     # Setup
     dfd = DFD(
@@ -46,6 +47,8 @@ async def test_get_dfd_by_id(db_session, sample_unidade):
         ano=2024,
         descricao_sucinta="Teste Get",
         unidade_requisitante_id=sample_unidade.id,
+        responsavel_id=sample_user.id, # <-- Corrigido
+        data_req=date.today(),         # <-- Corrigido
         status="Rascunho",
         is_active=True
     )

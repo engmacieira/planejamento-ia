@@ -27,11 +27,14 @@ class DFD(Base):
     # Campos Descritivos
     descricao_sucinta: Mapped[str] = mapped_column(String(255))
     justificativa_necessidade: Mapped[str | None] = mapped_column(Text, nullable=True)
-    data_req: Mapped[date] = mapped_column(Date) # Campo obrigatório adicionado
+    data_req: Mapped[date] = mapped_column(Date)
     
     # Relacionamentos (Foreign Keys)
     unidade_requisitante_id: Mapped[int] = mapped_column(ForeignKey("unidades_requisitantes.id"))
-    responsavel_id: Mapped[int] = mapped_column(ForeignKey("users.id")) # Campo obrigatório adicionado
+    
+    # CORREÇÃO AQUI: "users.id" -> "usuarios.id"
+    responsavel_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id")) 
+    
     etp_id: Mapped[int | None] = mapped_column(ForeignKey("etps.id"), nullable=True)
     
     # Metadados
@@ -41,7 +44,7 @@ class DFD(Base):
     
     # --- Relacionamentos (ORM) ---
     unidade_requisitante: Mapped["Unidade"] = relationship("Unidade", lazy="selectin")
-    responsavel: Mapped["User"] = relationship("User", lazy="selectin") # Relacionamento novo
+    responsavel: Mapped["User"] = relationship("User", lazy="selectin")
     
     itens: Mapped[list["ItemDFD"]] = relationship("ItemDFD", back_populates="dfd", cascade="all, delete-orphan")
     equipe: Mapped[list["DFDEquipe"]] = relationship("DFDEquipe", back_populates="dfd")
