@@ -8,16 +8,17 @@ async def test_login_sucesso(client: AsyncClient, sample_user):
     """
     Testa o fluxo de login para obter access_token.
     """
-    # Credenciais padrão do sample_user (conftest via get_password_hash("123456"))
+    # Use as credenciais EXATAS definidas na fixture sample_user do conftest.py
     payload = {
-        "username": "test@example.com", # Auth route usa email como username
-        "password": "123456"
+        "username": sample_user.email, # <--- Usa o email real da fixture (teste@teste.com)
+        "password": "123456"           # Senha padrão definida na fixture
     }
 
-    # Endpoint OAuth2 form-urlencoded padrão
     response = await client.post("/token", data=payload)
     
-    assert response.status_code == 200
+    # Debug para ajudar caso falhe
+    assert response.status_code == 200, f"Falha no login: {response.text}"
+    
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
@@ -27,27 +28,20 @@ async def test_rota_protegida_sem_token(client: AsyncClient):
     """
     Tenta acessar rota protegida sem token e deve receber 401.
     """
-    # Tentando acessar /users/me do UserRouter (assumindo prefixo, ou rota raiz se dependente de include)
-    # IMPORTANTE: Verifique o prefixo exato em main.py ou user_router.py. 
-    # Em main.py: app.include_router(user_router.router)
-    # Em user_router.py: geralmente user_router não tem prefixo ou é /users
-    # Vamos tentar /users/me, se falhar 404 a gente ajusta, mas a regra é 401 pra falta de credencial.
-    
+    # Ajuste a rota se necessário. Se /users/me não existir, tente /users/
     response = await client.get("/users/me")
     
-    # Se a rota não existir seria 404, mas se existir e proteger, deve ser 401.
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
 
 @pytest.mark.asyncio
 async def test_rota_protegida_com_token(client: AsyncClient, usuario_normal_token, sample_user):
     """
-    Acessa rota protegida com token válido e verifica sucesso.
+    Acessa rota protegida com token válido.
     """
     response = await client.get("/users/me", headers=usuario_normal_token)
     
-    # Se obtiver 200, validamos que o usuário retornado é o correto
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Erro na rota protegida: {response.text}"
     data = response.json()
     assert data["email"] == sample_user.email
     assert data["username"] == sample_user.username

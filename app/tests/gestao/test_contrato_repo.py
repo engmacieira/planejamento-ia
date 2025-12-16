@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
+from datetime import date
 from app.repositories.gestao.contrato_repository import ContratoRepository
-from app.schemas.gestao.contrato_schema import ContratoRequest
+from app.schemas.gestao.contrato_schema import ContratoCreateRequest
 from app.models.gestao.contrato_model import Contrato
 
 @pytest.mark.asyncio
@@ -11,20 +12,6 @@ async def test_create_contrato_mock():
     mock_session.commit.return_value = None
     mock_session.refresh.return_value = None
     mock_session.add = MagicMock() # Ensure add is synchronous
-    
-    # Mock Dependency Repositories calls if they are used inside create_with_relationships
-    # The ContratoRepository uses get_or_create internally.
-    # We need to make sure those internal calls work or we mock the whole method.
-    # Given unit testing scope, best to Integration Test this or mock side effects of get_or_create.
-    # However, since we refactored ContratoRepository to use `create_with_relationships` internally or override create,
-    # let's look at how it works. It calls self.get_or_create for dependencies.
-    # Testing strict logic here is hard without a real DB or heavy mocking.
-    
-    # Let's simple-mock the repository to return a Contract on create() call for now, 
-    # as ensuring all inner logic (Fornecedor, Modalidade lookup) is mocked is verbose.
-    
-    # BUT better strategy: Mock the internal get_or_create calls OF THE REPOSITORY INSTANCE?
-    # Or just mock the DB result if we trust logic.
     
     repo = ContratoRepository(mock_session)
     
@@ -47,8 +34,10 @@ async def test_create_contrato_mock():
     repo.processo_licitatorio_repo = MagicMock()
     repo.processo_licitatorio_repo.get_or_create = AsyncMock(return_value=MagicMock(id=1))
     
-    req = ContratoRequest(
+    req = ContratoCreateRequest(
         numero_contrato="12345", 
+        ano_contrato=2024,             
+        data_assinatura=date.today(),
         data_inicio="2024-01-01",
         data_fim="2024-12-31",
         categoria_nome="Serviços",

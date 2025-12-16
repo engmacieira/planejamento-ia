@@ -1,9 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel, Field, ConfigDict 
 from .fornecedor_schema import FornecedorRequest, FornecedorResponse
 
 class ContratoBase(BaseModel): 
     numero_contrato: str
+    ano_contrato: int       # Garanta que este campo está aqui
+    data_assinatura: date   # <--- [CRÍTICO] ESTE CAMPO ESTÁ FALTANDO NO SEU ARQUIVO
     data_inicio: date
     data_fim: date
     objeto: str
@@ -31,7 +33,7 @@ class ContratoUpdateRequest(BaseModel):
 
 class ContratoResponse(ContratoBase): 
     id: int
-    data_criacao: date
+    data_criacao: datetime
     ativo: bool
     fornecedor: FornecedorResponse 
     id_categoria: int
@@ -39,6 +41,7 @@ class ContratoResponse(ContratoBase):
     id_modalidade: int
     id_numero_modalidade: int
     id_processo_licitatorio: int
-
+    
+    model_config = ConfigDict(from_attributes=True)
 
 ContratoRequest = ContratoCreateRequest

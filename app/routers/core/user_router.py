@@ -1,24 +1,37 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.core.user_schema import UserCreate, UserResponse
 from app.repositories.core.user_repository import UserRepository
-from app.core.deps import get_user_repo
+from app.models.core.user_model import User
 
-# Prefixo: todas as rotas aqui começam com /users
+# CORREÇÃO: Importar de 'deps' para alinhar com o teste e usar get_current_user
+from app.core.deps import get_db, get_current_user
+
 router = APIRouter(prefix="/users", tags=["Core - Users"])
 
+# Helper para instanciar repositório
+async def get_async_user_repo(db: AsyncSession = Depends(get_db)) -> UserRepository:
+    return UserRepository(db)
+
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
-def create_user(
+async def create_user(
     request: UserCreate, 
-    repo: UserRepository = Depends(get_user_repo)
+    repo: UserRepository = Depends(get_async_user_repo)
 ):
-    # 1. Tentar criar
     try:
-        new_user = repo.create_user(request)
+        new_user = await repo.create_user(request) # Assumindo repo async
         return new_user
-    except Exception:
-        # Se der erro (ex: email duplicado), o repo lançou Exception.
-        # Aqui transformamos em erro HTTP 400 para o frontend entender.
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Erro ao criar usuário. Email já cadastrado?"
+            detail=f"Erro ao criar usuário: {str(e)}"
         )
+
+# ADIÇÃO: Rota /me para testar autenticação e obter dados do usuário logado
+@router.get("/me", response_model=UserResponse)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    """
+    Retorna os dados do usuário logado.
+    Serve para testar se o token está sendo decodificado corretamente.
+    """
+    return current_user

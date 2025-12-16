@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class GenerateObjectRequest(BaseModel):
@@ -71,6 +71,8 @@ class GenerateETPViabilityRequest(BaseModel):
 
 class GenerateObjectResponse(BaseModel):
     result: str
+    
+    model_config = ConfigDict(from_attributes=True)
     
 class GenerateConsolidatedRequest(BaseModel):
     text_list: list[str]

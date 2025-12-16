@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+# CORREÇÃO: Importar de 'deps' para que o override do teste funcione
+from app.core.deps import get_db 
 from app.repositories.core.user_repository import UserRepository
 from app.core.security import verify_password, create_access_token
 from app.schemas.core.token_schema import Token
@@ -10,20 +11,19 @@ from app.schemas.core.token_schema import Token
 router = APIRouter(tags=["Core - Auth"])
 
 @router.post("/token", response_model=Token)
-def login_for_access_token(
+async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
-    Rota de Login Padrão OAuth2.
-    O form_data traz: username (que usaremos como email) e password.
+    Rota de Login Padrão OAuth2 (Versão Async).
     """
     repo = UserRepository(db)
     
-    # 1. Busca o usuário pelo email (O campo vem como 'username' no form padrão)
-    user = repo.get_by_email(form_data.username)
+    # 1. Busca assíncrona (await é obrigatório aqui)
+    user = await repo.get_by_email(form_data.username)
     
-    # 2. Verifica se usuário existe E se a senha bate
+    # 2. Verifica se usuário existe e senha confere
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -31,7 +31,7 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # 3. Se passou, gera o Token JWT
-    access_token = create_access_token(data={"sub": user.email})
+    # 3. Gera Token usando o ID
+    access_token = create_access_token(data={"sub": str(user.id)})
     
     return {"access_token": access_token, "token_type": "bearer"}

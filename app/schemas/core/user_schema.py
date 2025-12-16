@@ -44,3 +44,5 @@ class UserFilter(BaseModel):
     username: str | None = None
     email: str | None = None
     ativo: bool | None = None
+    
+    model_config = ConfigDict(from_attributes=True)
