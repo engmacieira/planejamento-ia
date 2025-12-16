@@ -4,6 +4,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.subgrupo_model import Subgrupo
+
 class CatalogoItem(Base):
     __tablename__ = "catalogo_itens"
 

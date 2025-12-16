@@ -2,6 +2,12 @@ from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.etp_model import ETP
+    from app.models.core.agente_model import Agente
+
 class ETPEquipe(Base):
     __tablename__ = "etp_equipe"
 

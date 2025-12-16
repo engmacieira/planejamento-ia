@@ -3,6 +3,12 @@ from sqlalchemy import Integer, ForeignKey, String, Numeric, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.gestao.aocs_model import Aocs
+    from app.models.gestao.item_model import ItemContrato
+
 class ItensAocs(Base):
     __tablename__ = "itens_aocs"
     

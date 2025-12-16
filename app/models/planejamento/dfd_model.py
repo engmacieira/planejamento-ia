@@ -4,6 +4,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.core.unidade_model import Unidade
+    from app.models.planejamento.dfd_equipe_model import DFDEquipe
+    from app.models.planejamento.dfd_dotacao_model import DFDDotacao
+    from app.models.planejamento.etp_model import ETP
+    from app.models.planejamento.item_dfd_model import ItemDFD
+    
 class DFD(Base):
     __tablename__ = "dfds"
     

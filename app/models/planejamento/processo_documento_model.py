@@ -2,6 +2,11 @@ from sqlalchemy import String, Text, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.core.user_model import User
+
 class ProcessoDocumento(Base):
     __tablename__ = "processos" # Table name from legacy process_model.py
 

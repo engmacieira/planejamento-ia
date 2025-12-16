@@ -5,6 +5,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.gestao.aocs_model import Aocs
+    
 class CiPagamento(Base):
     __tablename__ = "ci_pagamentos"
 

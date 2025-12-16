@@ -3,6 +3,11 @@ from sqlalchemy import ForeignKey, String, Integer, Boolean, Numeric, Computed
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.gestao.contrato_model import Contrato
+
 class ItemContrato(Base): # Renamed from Item for clarity/consistency
     __tablename__ = "itens_contrato"
 

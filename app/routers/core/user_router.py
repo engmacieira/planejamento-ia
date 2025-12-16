@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.schemas.user_schema import UserCreate, UserResponse
+from app.schemas.core.user_schema import UserCreate, UserResponse
 from app.repositories.core.user_repository import UserRepository
 from app.core.deps import get_user_repo
 

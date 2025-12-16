@@ -6,17 +6,17 @@ from app.core.database import Base
 from app.core.security import get_password_hash
 # Import models to ensure they are registered with Base
 import app.models 
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from app.core.security import create_access_token
 from app.main import app 
+from app.core.deps import get_db
 
 # Use Async SQLite in-memory
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False},
-    pool_pre_ping=True
+    connect_args={"check_same_thread": False}
 )
 
 TestingSessionLocal = sessionmaker(
@@ -40,11 +40,6 @@ async def db_session():
     
     async with TestingSessionLocal() as session:
         yield session
-        # No need to explicitly drop if using :memory: per check, but safe to drop.
-        # But for async sqlite :memory:, usually shared engine holds it.
-        # With create_async_engine and :memory:, data persists while engine is alive?
-        # Actually in-memory sqlite is per connection if url is default, but shared if cache=shared.
-        # Let's drop all at end of session.
     
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -85,20 +80,26 @@ async def sample_unidade(db_session):
     await db_session.commit()
     await db_session.refresh(unidade)
     return unidade
-    return unidade
 
 @pytest.fixture(scope="function")
 async def client(db_session):
     """
     Creates an AsyncClient for integration tests.
     """
-    async with AsyncClient(app=app, base_url="http://test") as c:
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
+    
+    app.dependency_overrides.clear()
 
 @pytest.fixture(scope="function")
 async def usuario_normal_token(db_session, sample_user):
     """
     Returns a valid access token for the sample_user.
     """
-    access_token = create_access_token(data={"sub": sample_user.email})
+    access_token = create_access_token(data={"sub": str(sample_user.id)})
     return {"Authorization": f"Bearer {access_token}"}

@@ -23,3 +23,24 @@ class UserResponse(UserBase):
 class UserChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    nome_completo: str | None = None
+    password: str | None = None
+    is_active: bool | None = None
+    cpf: str | None = None
+    telefone: str | None = None
+
+UserUpdateRequest = UserUpdate
+
+class UserAdminResponse(UserResponse):
+    cpf: str | None = None
+    telefone: str | None = None
+    id_perfil: int | None = None
+
+class UserFilter(BaseModel):
+    username: str | None = None
+    email: str | None = None
+    ativo: bool | None = None

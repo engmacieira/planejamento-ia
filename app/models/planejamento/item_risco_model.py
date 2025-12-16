@@ -2,6 +2,11 @@ from sqlalchemy import String, Integer, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.matriz_risco_model import MatrizRisco
+
 class ItemRisco(Base):
     __tablename__ = "itens_risco"
 

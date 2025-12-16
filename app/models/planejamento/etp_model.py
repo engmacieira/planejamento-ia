@@ -2,6 +2,15 @@ from sqlalchemy import Integer, Text, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.dfd_model import DFD
+    from app.models.planejamento.item_etp_model import ItemETP
+    from app.models.planejamento.etp_equipe_model import ETPEquipe
+    from app.models.planejamento.etp_dotacao_model import ETPDotacao
+    from app.models.planejamento.matriz_risco_model import MatrizRisco
+
 class ETP(Base):
     __tablename__ = "etps"
 

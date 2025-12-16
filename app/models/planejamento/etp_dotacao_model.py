@@ -2,6 +2,12 @@ from sqlalchemy import Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.etp_model import ETP
+    from app.models.gestao.dotacao_model import Dotacao
+
 class ETPDotacao(Base):
     __tablename__ = "etp_dotacoes"
 

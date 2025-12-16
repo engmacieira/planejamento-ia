@@ -90,6 +90,12 @@ class ContratoRepository(BaseRepository[Contrato, ContratoCreateRequest, Contrat
             self.db_session.add(db_obj)
             await self.db_session.commit()
             await self.db_session.refresh(db_obj)
+            db_obj.fornecedor = fornecedor 
+            db_obj.categoria = categoria
+            db_obj.instrumento_contratual = instrumento
+            db_obj.modalidade = modalidade
+            # db_obj.numero_modalidade = numero_modalidade # If needed in response
+            # db_obj.processo_licitatorio = processo # If needed in response
             
             logger.info(f"Contrato criado: {db_obj.numero_contrato}")
             return db_obj

@@ -3,6 +3,12 @@ from sqlalchemy import Integer, ForeignKey, Text, Numeric, Computed
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.dfd_model import DFD
+    from app.models.gestao.catalogo_item_model import CatalogoItem
+
 class ItemDFD(Base):
     __tablename__ = "itens_dfd"
     

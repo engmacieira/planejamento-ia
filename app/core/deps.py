@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import security
 from app.core.config import settings
-from app.core.database import SessionLocal
+from app.core.database import AsyncSessionLocal
 from app.models.core.user_model import User
 from app.repositories.core.user_repository import UserRepository
 
@@ -30,7 +30,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Cria uma sessão assíncrona com o banco e garante o fechamento.
     """
-    async with SessionLocal() as session:
+    async with AsyncSessionLocal() as session:
         try:
             yield session
         finally:

@@ -9,8 +9,8 @@ from werkzeug.security import generate_password_hash
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.core.user_model import User
-from app.schemas.core.user_schema import (UserCreateRequest, UserResponse,
-                                      UserUpdate, UserFilter)
+from app.schemas.core.user_schema import (UserCreateRequest, UserResponse, 
+                                          UserUpdateRequest, UserAdminResponse, UserFilter)
 from app.repositories.core.user_repository import UserRepository
 from functools import wraps
 

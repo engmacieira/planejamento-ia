@@ -2,6 +2,12 @@ from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.core.user_model import User
+    from app.models.core.log_documento_model import GenerationLog
+
 class Template(Base):
     __tablename__ = "templates"
 

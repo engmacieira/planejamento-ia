@@ -5,6 +5,13 @@ from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash
 from app.core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.planejamento.template_model import Template
+    from app.models.core.log_documento_model import GenerationLog
+    from app.models.planejamento.processo_documento_model import ProcessoDocumento
+
 class User(Base):
     __tablename__ = "usuarios"
 
@@ -31,3 +38,7 @@ class User(Base):
 
     def verificar_senha(self, senha_pura: str) -> bool:
         return check_password_hash(self.password_hash, senha_pura)
+
+    @property
+    def is_active(self) -> bool:
+        return self.ativo

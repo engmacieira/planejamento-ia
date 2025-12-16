@@ -7,13 +7,21 @@ from app.core.database import Base
 # Imports for string forward references are not strictly needed at runtime if using "ClassName" string, but good for clarity or TYPE_CHECKING
 # Keeping it simple with string refs as used in relationship arguments.
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.gestao.fornecedor_model import Fornecedor
+    from app.models.gestao.instrumento_model import InstrumentoContratual
+    from app.models.planejamento.categoria_model import Categoria
+    from app.models.planejamento.modalidade_model import Modalidade
+
 class Contrato(Base): 
     __tablename__ = "contratos"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     
     # Identificação do Contrato
-    numero_contrato: Mapped[int] = mapped_column(Integer)
+    numero_contrato: Mapped[str] = mapped_column(String(50), unique=True)
     ano_contrato: Mapped[int] = mapped_column(Integer)
     objeto: Mapped[str | None] = mapped_column(String(255), nullable=True)
     
@@ -51,3 +59,11 @@ class Contrato(Base):
     
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
+
+    @property
+    def data_inicio(self) -> date:
+        return self.data_inicio_vigencia
+
+    @property
+    def data_fim(self) -> date:
+        return self.data_fim_vigencia
