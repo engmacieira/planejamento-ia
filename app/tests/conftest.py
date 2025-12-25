@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
-from sqlalchemy.pool import StaticPool # Essencial para SQLite em memória
+from sqlalchemy.pool import StaticPool
 from datetime import date
 
 from httpx import AsyncClient, ASGITransport
@@ -12,12 +12,11 @@ from httpx import AsyncClient, ASGITransport
 # --- IMPORTS DA APLICAÇÃO ---
 from app.main import app 
 from app.core.database import Base
-# IMPORTANTE: Importe get_db de onde seus routers importam (geralmente deps)
-# Se der erro de import, mude para 'from app.core.database import get_db'
-from app.core.deps import get_db 
+# Importamos as dependências para fazer o OVERRIDE
+from app.core.deps import get_db, get_current_user, get_current_active_superuser
 from app.core.security import create_access_token, get_password_hash
 
-# --- MODELS (Para as Fixtures) ---
+# --- MODELS ---
 from app.models.core.user_model import User
 from app.models.core.unidade_model import Unidade
 from app.models.gestao.fornecedor_model import Fornecedor
@@ -36,7 +35,7 @@ SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL, 
     connect_args={"check_same_thread": False},
-    poolclass=StaticPool # Mantém os dados vivos entre conexões na mesma thread
+    poolclass=StaticPool
 )
 
 TestingSessionLocal = sessionmaker(
@@ -47,6 +46,23 @@ TestingSessionLocal = sessionmaker(
     autocommit=False
 )
 
+# --- CLASS MOCK DE USUÁRIO (O Impostor Honesto) ---
+class UserMock:
+    """
+    Simula um objeto User para passar pelas dependências de segurança.
+    Agora limpo: sem 'is_superuser' pois corrigimos a dependência.
+    """
+    def __init__(self, id=1, username="usuario_teste", email="teste@teste.com"):
+        self.id = id
+        self.username = username
+        self.email = email
+        self.nome_completo = "Usuario Teste Mock"
+        self.ativo = True      # Campo real do banco
+        self.is_active = True  # Property do model
+        
+        self.id_perfil = 1     # 1 = Admin (Isso satisfaz o deps.py corrigido)
+        self.nivel_acesso = 2  # Nível de acesso legado, se usado
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Cria uma instância do event loop para a sessão de testes."""
@@ -56,10 +72,7 @@ def event_loop():
 
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Cria uma sessão nova e limpa para cada teste.
-    Cria as tabelas antes e dropa depois.
-    """
+    """Sessão de banco limpa para cada teste."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
@@ -72,12 +85,19 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture(scope="function")
 async def client(db_session):
     """
-    Cliente HTTP Async que sobrescreve a dependência do banco (get_db).
+    Cliente HTTP com autenticação ignorada (Bypass).
     """
+    # 1. Override do Banco
     async def override_get_db():
         yield db_session
 
+    # 2. Override da Auth (Bypass total)
+    def override_get_current_user():
+        return UserMock()
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_current_active_superuser] = override_get_current_user
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
@@ -88,8 +108,10 @@ async def client(db_session):
 
 @pytest.fixture(scope="function")
 async def sample_user(db_session):
-    """Cria um usuário com senha hash e campos obrigatórios."""
-    # Verifica existência para evitar erro de Unique Constraint
+    """
+    Cria um usuário REAL no banco de dados.
+    Corrigido: Sem campos inexistentes (is_superuser).
+    """
     stmt = select(User).where(User.username == "usuario_teste")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
@@ -100,8 +122,12 @@ async def sample_user(db_session):
         username="usuario_teste",
         email="teste@teste.com",
         nome_completo="Usuario Teste",
-        password_hash=password_hash, # Campo corrigido
-        ativo=True
+        password_hash=password_hash,
+        ativo=True,
+        # Campos obrigatórios adicionados para evitar erros de Integridade
+        cpf="00011122233", 
+        telefone="11999999999",
+        id_perfil=1 
     )
     db_session.add(user)
     await db_session.commit()
@@ -110,20 +136,19 @@ async def sample_user(db_session):
 
 @pytest.fixture(scope="function")
 async def usuario_normal_token(sample_user):
-    """Gera um token JWT válido para o usuário de teste."""
+    """Gera token válido para testes que NÃO usam o override de auth."""
     access_token = create_access_token(data={"sub": str(sample_user.id)})
     return {"Authorization": f"Bearer {access_token}"}
 
 @pytest.fixture(scope="function")
 async def sample_unidade(db_session):
-    """Cria uma unidade requisitante."""
     stmt = select(Unidade).where(Unidade.nome == "Unidade Teste")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
     if existing: return existing
 
     unidade = Unidade(
-        codigo_administrativo="001", # Campo corrigido (era codigo)
+        codigo_administrativo="001",
         nome="Unidade Teste", 
         sigla="UT",
         ativo=True
@@ -135,7 +160,6 @@ async def sample_unidade(db_session):
 
 @pytest.fixture(scope="function")
 async def sample_fornecedor(db_session):
-    """Cria um fornecedor."""
     fornecedor = Fornecedor(
         razao_social="Fornecedor Teste Ltda",
         cpf_cnpj="12345678000199",
@@ -147,11 +171,10 @@ async def sample_fornecedor(db_session):
     await db_session.refresh(fornecedor)
     return fornecedor
 
-# --- FIXTURES HIERÁRQUICAS (Categorias, Processos, etc) ---
+# --- FIXTURES HIERÁRQUICAS ---
 
 @pytest.fixture(scope="function")
 async def sample_categoria(db_session):
-    """Cria Categoria 'Serviços' com codigo_taxonomia preenchido."""
     stmt = select(Categoria).where(Categoria.nome == "Serviços")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
@@ -159,7 +182,7 @@ async def sample_categoria(db_session):
 
     cat = Categoria(
         nome="Serviços", 
-        codigo_taxonomia="SV", # Campo obrigatório preenchido
+        codigo_taxonomia="SV",
         ativo=True
     )
     db_session.add(cat)
@@ -192,7 +215,6 @@ async def sample_modalidade(db_session):
 
 @pytest.fixture(scope="function")
 async def sample_dfd(db_session, sample_unidade, sample_user):
-    """Cria um DFD pai para o processo licitatório."""
     dfd = DFD(
         numero=1,
         ano=2024,
@@ -210,7 +232,6 @@ async def sample_dfd(db_session, sample_unidade, sample_user):
 
 @pytest.fixture(scope="function")
 async def sample_processo(db_session, sample_dfd, sample_modalidade):
-    """Cria um Processo Licitatório válido vinculado ao DFD."""
     stmt = select(ProcessoLicitatorio).where(ProcessoLicitatorio.numero_processo == 1)
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
@@ -218,7 +239,7 @@ async def sample_processo(db_session, sample_dfd, sample_modalidade):
 
     processo = ProcessoLicitatorio(
         id_dfd=sample_dfd.id,
-        numero_processo=1, # Nome do campo corrigido (era numero)
+        numero_processo=1,
         ano_processo=2024,
         id_modalidade=sample_modalidade.id,
         objeto="Processo Licitatório de Teste",
@@ -231,16 +252,13 @@ async def sample_processo(db_session, sample_dfd, sample_modalidade):
 
 @pytest.fixture(scope="function")
 async def sample_grupo(db_session, sample_categoria):
-    """
-    Cria um Grupo vinculado à Categoria (Ex: 33 - Despesas Correntes).
-    """
     stmt = select(Grupo).where(Grupo.codigo == "33")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
     if existing: return existing
 
     grupo = Grupo(
-        categoria_id=sample_categoria.id, # FK Obrigatória
+        categoria_id=sample_categoria.id,
         codigo="33", 
         nome="Despesas Correntes",
         ativo=True
@@ -252,16 +270,13 @@ async def sample_grupo(db_session, sample_categoria):
 
 @pytest.fixture(scope="function")
 async def sample_subgrupo(db_session, sample_grupo):
-    """
-    Cria um Subgrupo vinculado ao Grupo (Ex: 90 - Aplicações Diretas).
-    """
     stmt = select(Subgrupo).where(Subgrupo.codigo == "90")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
     if existing: return existing
 
     subgrupo = Subgrupo(
-        grupo_id=sample_grupo.id, # FK Obrigatória
+        grupo_id=sample_grupo.id,
         codigo="90",
         nome="Aplicações Diretas",
         ativo=True
@@ -273,25 +288,18 @@ async def sample_subgrupo(db_session, sample_grupo):
 
 @pytest.fixture(scope="function")
 async def sample_catalogo_item(db_session, sample_subgrupo):
-    """
-    Cria um Item de Catálogo válido vinculado ao Subgrupo.
-    """
-    # Busca usando o campo correto 'codigo_identificacao_completo'
     stmt = select(CatalogoItem).where(CatalogoItem.codigo_identificacao_completo == "1001")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
     if existing: return existing
 
     item = CatalogoItem(
-        id_subgrupo=sample_subgrupo.id, # FK Obrigatória
-        
-        # Campos Obrigatórios do Model
+        id_subgrupo=sample_subgrupo.id,
         nome_item="Item de Catálogo Teste",
         unidade_medida="UN",
         tipo="Material",
         numero_sequencial_taxonomia="0001",
-        codigo_identificacao_completo="1001", # Identificador único
-        
+        codigo_identificacao_completo="1001",
         ativo=True
     )
     db_session.add(item)
