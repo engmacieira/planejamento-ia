@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.repositories.planejamento.processo_repository import ProcessoRepository
 from app.repositories.planejamento.dfd_repository import DFDRepository
-from app.schemas.planejamento.processo_schema import ProcessoLicitatorioCreate
+from app.schemas.planejamento.processo_schema import ProcessoCreate
 
 class ProcessoService:
     def get_processos(self, db: Session, skip: int = 0, limit: int = 100):
@@ -12,7 +12,7 @@ class ProcessoService:
         repo = ProcessoRepository(db)
         return repo.get_by_id(processo_id)
 
-    def create_processo(self, db: Session, processo_in: ProcessoLicitatorioCreate):
+    def create_processo(self, db: Session, processo_in: ProcessoCreate):
         # Logic: Verify DFD exists
         dfd_repo = DFDRepository(db)
         db_dfd = dfd_repo.get_by_id(processo_in.id_dfd)

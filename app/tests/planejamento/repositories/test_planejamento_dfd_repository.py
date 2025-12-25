@@ -1,13 +1,13 @@
 import pytest
 from app.repositories.planejamento.dfd_repository import DFDRepository
-from app.schemas.planejamento.dfd_schema import DFDCreate, ItemDFDSchema
+from app.schemas.planejamento.dfd_schema import DFDCreate, DFDItemBase
 from app.models.planejamento.dfd_model import DFD
 
 @pytest.mark.asyncio
 async def test_create_dfd_with_nested(db_session, sample_unidade):
     repo = DFDRepository(db_session)
     
-    item_in = ItemDFDSchema(
+    item_in = DFDItemBase(
         catalogo_item_id=1, # Mock ID
         quantidade=10,
         valor_unitario_estimado=5.0,

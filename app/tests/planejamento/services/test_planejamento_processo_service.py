@@ -1,6 +1,6 @@
 import pytest
 from app.services.planejamento.processo_service import ProcessoService
-from app.schemas.planejamento.processo_schema import ProcessoLicitatorioCreate
+from app.schemas.planejamento.processo_schema import ProcessoCreate
 from app.models.planejamento.dfd_model import DFD
 
 @pytest.mark.asyncio
@@ -13,7 +13,7 @@ async def test_processo_service_logic(db_session, sample_unidade):
     await db_session.commit()
     await db_session.refresh(dfd) # Get ID
     
-    proc_in = ProcessoLicitatorioCreate(
+    proc_in = ProcessoCreate(
         id_dfd=dfd.id,
         numero="PROC-SERVICE/2024",
         objeto="Objeto Service"
@@ -35,13 +35,13 @@ async def test_processo_service_logic(db_session, sample_unidade):
     
     with pytest.raises(ValueError, match="already linked"):
         # Create another input with same DFD
-        proc_in_2 = ProcessoLicitatorioCreate(id_dfd=dfd.id, numero="PROC-FAIL/2024", objeto="Fail")
+        proc_in_2 = ProcessoCreate(id_dfd=dfd.id, numero="PROC-FAIL/2024", objeto="Fail")
         await service.create_processo(db_session, proc_in_2)
 
 @pytest.mark.asyncio
 async def test_processo_service_dfd_not_found(db_session):
     service = ProcessoService()
-    proc_in = ProcessoLicitatorioCreate(id_dfd=99999, numero="PROC-404", objeto="404")
+    proc_in = ProcessoCreate(id_dfd=99999, numero="PROC-404", objeto="404")
     
     with pytest.raises(ValueError, match="DFD not found"):
         await service.create_processo(db_session, proc_in)

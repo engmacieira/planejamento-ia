@@ -1,6 +1,6 @@
 import pytest
 import io
-from app.models.gestao.anexo_model import Anexo
+from app.models.core.anexo_model import Anexo
 
 @pytest.mark.asyncio
 async def test_upload_anexo_success(client, usuario_normal_token, db_session):

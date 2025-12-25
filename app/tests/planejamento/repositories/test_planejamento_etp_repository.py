@@ -1,7 +1,7 @@
 import pytest
 from app.repositories.planejamento.etp_repository import ETPRepository
 from app.repositories.planejamento.dfd_repository import DFDRepository
-from app.schemas.planejamento.dfd_schema import DFDCreate, ItemDFDSchema
+from app.schemas.planejamento.dfd_schema import DFDCreate, DFDItemBase
 
 @pytest.mark.asyncio
 async def test_consolidar_dfds(db_session, sample_unidade):
@@ -9,10 +9,10 @@ async def test_consolidar_dfds(db_session, sample_unidade):
     etp_repo = ETPRepository(db_session)
     
     # Create 2 DFDs with same item to test summing
-    item1 = ItemDFDSchema(catalogo_item_id=10, quantidade=5, valor_unitario_estimado=2.0)
+    item1 = DFDItemBase(catalogo_item_id=10, quantidade=5, valor_unitario_estimado=2.0)
     dfd1 = await dfd_repo.create(DFDCreate(ano=2024, id_unidade_requisitante=sample_unidade.id, objeto="D1", justificativa="J", itens=[item1]))
     
-    item2 = ItemDFDSchema(catalogo_item_id=10, quantidade=3, valor_unitario_estimado=2.0)
+    item2 = DFDItemBase(catalogo_item_id=10, quantidade=3, valor_unitario_estimado=2.0)
     dfd2 = await dfd_repo.create(DFDCreate(ano=2024, id_unidade_requisitante=sample_unidade.id, objeto="D2", justificativa="J", itens=[item2]))
     
     # Consolidate

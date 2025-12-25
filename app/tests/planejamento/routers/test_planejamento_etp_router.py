@@ -1,6 +1,6 @@
 import pytest
 from app.repositories.planejamento.dfd_repository import DFDRepository
-from app.schemas.planejamento.dfd_schema import DFDCreate, ItemDFDSchema
+from app.schemas.planejamento.dfd_schema import DFDCreate, DFDItemBase
 
 @pytest.mark.asyncio
 async def test_etp_router_consolidar_and_lifecycle(client, usuario_normal_token, db_session, sample_unidade):
