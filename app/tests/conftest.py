@@ -12,8 +12,10 @@ from httpx import AsyncClient, ASGITransport
 # --- IMPORTS DA APLICAÇÃO ---
 from app.main import app 
 from app.core.database import Base
-# Importamos as dependências para fazer o OVERRIDE
-from app.core.deps import get_db, get_current_user, get_current_active_superuser
+# Importamos o MÓDULO database para fazer o patch da engine
+from app.core import database as real_database_module 
+
+from app.core.deps import get_db, get_current_user, get_current_active_superuser, oauth2_scheme
 from app.core.security import create_access_token, get_password_hash
 
 # --- MODELS ---
@@ -29,89 +31,99 @@ from app.models.gestao.catalogo_item_model import CatalogoItem
 from app.models.planejamento.grupo_model import Grupo
 from app.models.planejamento.subgrupo_model import Subgrupo
 
-# --- CONFIGURAÇÃO DO BANCO (SQLite Async em Memória) ---
+# --- CONFIGURAÇÃO DO BANCO EM MEMÓRIA ---
+# check_same_thread=False é crucial para testes async com SQLite
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-engine = create_async_engine(
+test_engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL, 
     connect_args={"check_same_thread": False},
     poolclass=StaticPool
 )
 
 TestingSessionLocal = sessionmaker(
-    bind=engine, 
+    bind=test_engine, 
     class_=AsyncSession,
     expire_on_commit=False,
     autoflush=False,
     autocommit=False
 )
 
-# --- CLASS MOCK DE USUÁRIO (O Impostor Honesto) ---
+# --- CLASS MOCK DE USUÁRIO ---
 class UserMock:
-    """
-    Simula um objeto User para passar pelas dependências de segurança.
-    Agora limpo: sem 'is_superuser' pois corrigimos a dependência.
-    """
     def __init__(self, id=1, username="usuario_teste", email="teste@teste.com"):
         self.id = id
         self.username = username
         self.email = email
         self.nome_completo = "Usuario Teste Mock"
-        self.ativo = True      # Campo real do banco
-        self.is_active = True  # Property do model
-        
-        self.id_perfil = 1     # 1 = Admin (Isso satisfaz o deps.py corrigido)
-        self.nivel_acesso = 2  # Nível de acesso legado, se usado
+        self.ativo = True
+        self.is_active = True
+        self.id_perfil = 1 # Admin
+        self.nivel_acesso = 2
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Cria uma instância do event loop para a sessão de testes."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
+# --- FIXTURE DO BANCO DE DADOS ---
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Sessão de banco limpa para cada teste."""
-    async with engine.begin() as conn:
+    """
+    Cria as tabelas no banco em memória e entrega uma sessão.
+    """
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
     async with TestingSessionLocal() as session:
         yield session
     
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+# --- CLIENT PRINCIPAL (AQUI ESTAVA O PROBLEMA) ---
 @pytest.fixture(scope="function")
 async def client(db_session):
     """
-    Cliente HTTP com autenticação ignorada (Bypass).
+    Cliente HTTP blindado.
+    Faz o patch da engine real para evitar conexões externas e
+    faz o bypass da autenticação.
     """
-    # 1. Override do Banco
+    # 1. PATCH NA ENGINE REAL DO APP (Solução do Travamento)
+    # Isso engana o app.main para ele usar nosso banco em memória
+    # mesmo que ele tente conectar no banco real no startup.
+    real_database_module.engine = test_engine
+    real_database_module.AsyncSessionLocal = TestingSessionLocal
+
+    # 2. OVERRIDES DE DEPENDÊNCIA
     async def override_get_db():
         yield db_session
 
-    # 2. Override da Auth (Bypass total)
     def override_get_current_user():
         return UserMock()
+
+    # Importante: Aceitar *args, **kwargs para não quebrar a assinatura
+    def override_oauth2_scheme(*args, **kwargs):
+        return "token_fake_bypass"
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_current_user
     app.dependency_overrides[get_current_active_superuser] = override_get_current_user
+    app.dependency_overrides[oauth2_scheme] = override_oauth2_scheme
     
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+    headers = {"Authorization": "Bearer token_falso_para_testes"}
+    
+    # 3. CRIAÇÃO DO CLIENTE
+    async with AsyncClient(
+        transport=ASGITransport(app=app), 
+        base_url="http://test",
+        headers=headers
+    ) as c:
         yield c
     
+    # 4. LIMPEZA
     app.dependency_overrides.clear()
 
-# --- FIXTURES DE DADOS MESTRES ---
+# --- DEMAIS FIXTURES (Mantidas iguais) ---
+# Copiei as mesmas fixtures da sua versão anterior para garantir compatibilidade
 
 @pytest.fixture(scope="function")
 async def sample_user(db_session):
-    """
-    Cria um usuário REAL no banco de dados.
-    Corrigido: Sem campos inexistentes (is_superuser).
-    """
     stmt = select(User).where(User.username == "usuario_teste")
     result = await db_session.execute(stmt)
     existing = result.scalars().first()
@@ -124,7 +136,6 @@ async def sample_user(db_session):
         nome_completo="Usuario Teste",
         password_hash=password_hash,
         ativo=True,
-        # Campos obrigatórios adicionados para evitar erros de Integridade
         cpf="00011122233", 
         telefone="11999999999",
         id_perfil=1 
@@ -136,7 +147,6 @@ async def sample_user(db_session):
 
 @pytest.fixture(scope="function")
 async def usuario_normal_token(sample_user):
-    """Gera token válido para testes que NÃO usam o override de auth."""
     access_token = create_access_token(data={"sub": str(sample_user.id)})
     return {"Authorization": f"Bearer {access_token}"}
 
@@ -171,8 +181,6 @@ async def sample_fornecedor(db_session):
     await db_session.refresh(fornecedor)
     return fornecedor
 
-# --- FIXTURES HIERÁRQUICAS ---
-
 @pytest.fixture(scope="function")
 async def sample_categoria(db_session):
     stmt = select(Categoria).where(Categoria.nome == "Serviços")
@@ -180,11 +188,7 @@ async def sample_categoria(db_session):
     existing = result.scalars().first()
     if existing: return existing
 
-    cat = Categoria(
-        nome="Serviços", 
-        codigo_taxonomia="SV",
-        ativo=True
-    )
+    cat = Categoria(nome="Serviços", codigo_taxonomia="SV", ativo=True)
     db_session.add(cat)
     await db_session.commit()
     return cat
