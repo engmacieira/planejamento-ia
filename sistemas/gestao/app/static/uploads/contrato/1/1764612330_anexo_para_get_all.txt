@@ -1,1 +1,0 @@
-Conteudo para o teste de get_all
