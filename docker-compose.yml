@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    # Mudei o nome para garantir que não colida com o antigo
+    container_name: planejamento_ia_db_clean
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      # MUDANÇA CRÍTICA: Nome novo para o banco nascer do zero
+      POSTGRES_DB: erp_novo_db
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Volume novo e vazio
+      - postgres_data_clean:/var/lib/postgresql/data
+      # 🚫 BLOQUEADO: Isso impedia o reset real. Não descomente!
+      # - ./sistemas/banco_de_dados:/docker-entrypoint-initdb.d
+    networks:
+      - planeja_net
+
+networks:
+  planeja_net:
+    driver: bridge
+
+volumes:
+  # Declaração do volume novo
+  postgres_data_clean:

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Tabelas - GestãoPRO{% endblock %}
+
+{% block content %}
+<div id="notification-area"></div>
+
+<header class="main-header">
+    <h1><i class="fa-solid fa-database"></i> Tabelas do Sistema</h1>
+    <p class="subtitle">Gerencie as listas auxiliares e cadastros básicos.</p>
+</header>
+
+<div class="management-container" style="display: flex; gap: 20px; align-items: flex-start;">
+    
+    <aside class="settings-sidebar" style="width: 260px; min-width: 260px;">
+        <div class="card" style="padding: 10px;">
+            <nav>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px;">
+                    {% for key, info in tabelas.items() %}
+                    <li>
+                        <button 
+                            class="nav-btn btn btn-light full-width" 
+                            style="text-align: left; width: 100%; justify-content: flex-start; padding: 10px;"
+                            data-target="{{ key }}" 
+                            data-coluna="{{ info.coluna }}"
+                        >
+                            {{ info.titulo }}
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="management-content" style="flex-grow: 1; width: 100%;">
+        <div class="card full-width" style="min-height: 400px;">
+            
+            <div id="empty-state" style="text-align: center; padding: 60px 20px; color: #888;">
+                <i class="fa-solid fa-table-list" style="font-size: 48px; margin-bottom: 15px; color: #ddd;"></i>
+                <h2>Selecione uma tabela</h2>
+                <p>Clique em uma das opções do menu lateral para visualizar e gerenciar os registros.</p>
+            </div>
+
+            {% include '_tabela_generica_crud.html' %}
+            
+        </div>
+    </main>
+</div>
+
+{% include '_modal_generica_crud.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ request.app.url_path_for('static', path='js/gerenciar_tabelas.js') }}" defer></script>
+{% endblock %}

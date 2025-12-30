@@ -1,0 +1,17 @@
+<div class="report-item">
+    <div class="report-info">
+        <h4>{{ config.titulo }}</h4>
+        <p>{{ config.descricao }}</p>
+    </div>
+    <div class="report-actions">
+        <div class="form-group">
+            <label for="ordenacao-{{ key }}">Ordenar por:</label>
+            <select id="ordenacao-{{ key }}" class="form-control">
+                {% for sort_key, sort_config in config.ordenacao_opcoes.items() %}
+                    <option value="{{ sort_key }}">{{ sort_config.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <a href="#" class="btn btn-primary" onclick="gerarRelatorio('{{ key }}')"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</a>
+    </div>
+</div>

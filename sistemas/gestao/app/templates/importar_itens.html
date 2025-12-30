@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Itens para {{ contrato.numero_contrato }}{% endblock %}
+
+{% block content %}
+<div id="notification-area"></div>
+
+<header class="main-header">
+    <a href="{{ request.app.url_path_for('detalhe_contrato', id_contrato=contrato.id) }}" class="back-link">
+        &larr; Voltar para os Detalhes do Contrato
+    </a>
+    <h1>Importar Itens para o Contrato</h1>
+    <p class="subtitle">Contrato: <strong class="text-blue">{{ contrato.numero_contrato }}</strong></p>
+</header>
+
+{% include '_importar_itens_steps.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const idContratoGlobal = {{ contrato.id }};
+    const redirectUrlGlobal = "{{ request.app.url_path_for('detalhe_contrato', id_contrato=contrato.id) }}";
+</script>
+
+<script src="{{ request.app.url_path_for('static', path='js/importar_itens.js') }}" defer></script>
+{% endblock %}
