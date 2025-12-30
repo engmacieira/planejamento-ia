@@ -1,22 +1,24 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, DateTime, Boolean
+from sqlalchemy import Boolean, DateTime, Integer
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.sql import func
 
 class DefaultModel:
     """
-    Mixin class that provides default columns for all models:
+    Mixin class modernizada para SQLAlchemy 2.0:
     - id: Primary Key
     - created_at: Creation timestamp
     - updated_at: Update timestamp
     - is_deleted: Soft delete flag
     """
-    @declared_attr
+    @declared_attr.directive
     def __tablename__(cls):
         return cls.__name__.lower()
 
-    id = Column(Integer, primary_key=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     
-    # Soft Delete: Em vez de apagar, marcamos como True
-    is_deleted = Column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), default=datetime.utcnow)
+    
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")

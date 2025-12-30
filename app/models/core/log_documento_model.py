@@ -1,6 +1,7 @@
-from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.core.base_model import DefaultModel  
 
 from typing import TYPE_CHECKING
 
@@ -8,10 +9,8 @@ if TYPE_CHECKING:
     from app.models.core.user_model import User
     from app.models.planejamento.template_model import Template
 
-class GenerationLog(Base):
+class GenerationLog(DefaultModel, Base): 
     __tablename__ = "generation_logs"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     
     generated_filename: Mapped[str] = mapped_column(String)
     
