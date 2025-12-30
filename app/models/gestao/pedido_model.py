@@ -3,18 +3,18 @@ from decimal import Decimal
 from sqlalchemy import String, Date, Numeric, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.core.base_model import DefaultModel 
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.gestao.aocs_model import Aocs
 
-class Pedido(Base):
+class Pedido(DefaultModel, Base): 
     __tablename__ = "pedido"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id_item_contrato: Mapped[int] = mapped_column(Integer) 
     
-    id_item_contrato: Mapped[int] = mapped_column(Integer) # Legacy link
     id_aocs: Mapped[int] = mapped_column(ForeignKey("aocs.id"))
     aocs: Mapped["Aocs"] = relationship("Aocs", lazy="selectin")
     

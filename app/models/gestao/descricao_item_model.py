@@ -1,9 +1,9 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
+from app.core.base_model import DefaultModel  
 
-class DescricaoItem(Base):
+class DescricaoItem(DefaultModel, Base): 
     __tablename__ = "descricao_item"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     descricao: Mapped[str] = mapped_column(String)
