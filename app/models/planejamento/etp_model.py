@@ -1,6 +1,7 @@
-from sqlalchemy import Integer, Text, Boolean, ForeignKey
+from sqlalchemy import Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.core.base_model import DefaultModel  
 
 from typing import TYPE_CHECKING
 
@@ -11,11 +12,9 @@ if TYPE_CHECKING:
     from app.models.planejamento.etp_dotacao_model import ETPDotacao
     from app.models.planejamento.matriz_risco_model import MatrizRisco
 
-class ETP(Base):
+class ETP(DefaultModel, Base): 
     __tablename__ = "etps"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    
     descricao_necessidade: Mapped[str | None] = mapped_column(Text, nullable=True)
     previsao_pca: Mapped[str | None] = mapped_column(Text, nullable=True)
     requisitos_tecnicos: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -28,10 +27,12 @@ class ETP(Base):
     demonstrativo_resultados: Mapped[str | None] = mapped_column(Text, nullable=True)
     providencias_previas: Mapped[str | None] = mapped_column(Text, nullable=True)
     impactos_ambientais: Mapped[str | None] = mapped_column(Text, nullable=True)
+    
     viabilidade: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     conclusao_viabilidade: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    dfds: Mapped[list["DFD"]] = relationship("DFD", back_populates="etp")
+    dfd: Mapped[list["DFD"]] = relationship("DFD", back_populates="etp")
+    
     itens: Mapped[list["ItemETP"]] = relationship("ItemETP", back_populates="etp", cascade="all, delete-orphan")
     equipe: Mapped[list["ETPEquipe"]] = relationship("ETPEquipe", back_populates="etp", cascade="all, delete-orphan")
     dotacoes: Mapped[list["ETPDotacao"]] = relationship("ETPDotacao", back_populates="etp", cascade="all, delete-orphan")
