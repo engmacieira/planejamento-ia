@@ -3,7 +3,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.core.database import Base, get_async_db
-from app.main import app  # Importe sua instância FastAPI
+from app.main import app  
 from typing import AsyncGenerator
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

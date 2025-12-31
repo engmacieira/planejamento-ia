@@ -1,4 +1,4 @@
-from app.models.planejamento.grupo_model import Grupo
+from app.models.gestao.grupo_model import Grupo
 
 def test_grupo_initialization():
     """

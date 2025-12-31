@@ -12,12 +12,10 @@ class Orgao(DefaultModel):
     """
     __tablename__ = "orgaos"
 
-    # Identificação Principal
     nome = Column(String(255), nullable=False, comment="Nome oficial (ex: Prefeitura Municipal de Salvador)")
     cnpj = Column(String(14), unique=True, nullable=False, index=True, comment="CNPJ (apenas números)")
     sigla = Column(String(20), nullable=True, comment="Sigla do Órgão (ex: PMS)")
     
-    # Endereço e Contato (Usados no Rodapé dos documentos)
     endereco = Column(String(255), nullable=True)
     cidade = Column(String(100), nullable=False, comment="Cidade sede")
     uf = Column(String(2), nullable=False, comment="Estado (UF)")
@@ -26,10 +24,8 @@ class Orgao(DefaultModel):
     email = Column(String(255), nullable=True)
     site = Column(String(255), nullable=True)
     
-    # Identidade Visual
     logo_path = Column(String(255), nullable=True, comment="Caminho relativo para o arquivo de logo (usado em relatórios)")
 
-    # Esfera Administrativa (Importante para regras da Lei 14.133)
     esfera = Column(String(20), default="Municipal", comment="Municipal, Estadual ou Federal")
 
     def __repr__(self):

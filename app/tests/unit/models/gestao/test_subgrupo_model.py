@@ -1,4 +1,4 @@
-from app.models.planejamento.subgrupo_model import Subgrupo
+from app.models.gestao.subgrupo_model import Subgrupo
 
 def test_subgrupo_initialization():
     """

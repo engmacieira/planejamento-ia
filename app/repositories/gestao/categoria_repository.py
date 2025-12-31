@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 import logging
 
-from app.models.planejamento.categoria_model import Categoria
+from app.models.gestao.categoria_model import Categoria
 from app.schemas.gestao.categoria_schema import CategoriaRequest
 from app.repositories.base_repository import BaseRepository
 

@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 import logging
 
-from app.models.planejamento.tipo_documento_model import TipoDocumento
+from app.models.gestao.tipo_documento_model import TipoDocumento
 from app.schemas.gestao.tipo_documento_schema import TipoDocumentoRequest
 from app.repositories.base_repository import BaseRepository
 

@@ -1,4 +1,4 @@
-from app.models.planejamento.categoria_model import Categoria
+from app.models.gestao.categoria_model import Categoria
 
 def test_categoria_initialization():
     """

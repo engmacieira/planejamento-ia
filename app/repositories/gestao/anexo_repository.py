@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import logging
 
-from app.models.core.anexo_model import Anexo
+from app.models.gestao.anexo_model import Anexo
 from app.schemas.gestao.anexo_schema import AnexoCreate
 from app.repositories.base_repository import BaseRepository
 from app.repositories.gestao.tipo_documento_repository import TipoDocumentoRepository

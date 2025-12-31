@@ -1,4 +1,4 @@
-from app.models.core.anexo_model import Anexo
+from app.models.gestao.anexo_model import Anexo
 
 def test_anexo_model_initialization():
     """

@@ -1,4 +1,4 @@
-from app.models.planejamento.tipo_documento_model import TipoDocumento
+from app.models.gestao.tipo_documento_model import TipoDocumento
 
 def test_tipo_documento_initialization():
     """

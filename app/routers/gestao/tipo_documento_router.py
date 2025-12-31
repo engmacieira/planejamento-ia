@@ -5,7 +5,7 @@ import logging
 from app.core.database import get_db
 from app.core.security import get_current_user, require_access_level
 from app.models.core.user_model import User
-from app.models.planejamento.tipo_documento_model import TipoDocumento 
+from app.models.gestao.tipo_documento_model import TipoDocumento 
 from app.schemas.gestao.tipo_documento_schema import TipoDocumentoRequest, TipoDocumentoResponse 
 from app.repositories.gestao.tipo_documento_repository import TipoDocumentoRepository 
 

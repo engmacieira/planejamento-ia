@@ -5,7 +5,7 @@ import logging
 from app.core.database import get_db
 from app.core.security import get_current_user, require_access_level
 from app.models.core.user_model import User
-from app.models.planejamento.categoria_model import Categoria
+from app.models.gestao.categoria_model import Categoria
 from app.schemas.gestao.categoria_schema import CategoriaRequest, CategoriaResponse
 from app.repositories.gestao.categoria_repository import CategoriaRepository
 

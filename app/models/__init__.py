@@ -2,18 +2,18 @@
 from .core.user_model import User
 from .core.agente_model import Agente
 from .core.unidade_model import Unidade
-from .core.anexo_model import Anexo
+from .gestao.anexo_model import Anexo
 from .core.perfil_model import Perfil
 from .core.log_auditoria_model import LogAuditoria
 from .core.log_documento_model import GenerationLog
 
 # Planejamento Models (Taxonomy, Plans, Documents)
-from .planejamento.categoria_model import Categoria
-from .planejamento.grupo_model import Grupo
-from .planejamento.subgrupo_model import Subgrupo
+from .gestao.categoria_model import Categoria
+from .gestao.grupo_model import Grupo
+from .gestao.subgrupo_model import Subgrupo
 from .planejamento.modalidade_model import Modalidade
 from .planejamento.numero_modalidade_model import NumeroModalidade
-from .planejamento.tipo_documento_model import TipoDocumento
+from .gestao.tipo_documento_model import TipoDocumento
 
 from .planejamento.etp_model import ETP
 from .planejamento.item_etp_model import ItemETP
