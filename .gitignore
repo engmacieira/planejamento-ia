@@ -8,6 +8,7 @@ venv/
 txt/
 notebooklm/
 .idea/
+.pytest_cache/
 .coverage
 .coveragerc
 

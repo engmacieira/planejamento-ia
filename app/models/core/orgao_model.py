@@ -1,7 +1,8 @@
 from sqlalchemy import Column, String
 from app.core.base_model import DefaultModel
+from app.core.database import Base
 
-class Orgao(DefaultModel):
+class Orgao(DefaultModel, Base):
     """
     Representa a Entidade Pública que utiliza o sistema (ex: Prefeitura Municipal de X).
     
