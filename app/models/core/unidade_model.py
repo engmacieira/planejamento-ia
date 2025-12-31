@@ -1,21 +1,31 @@
-from datetime import date
-from sqlalchemy import String, ForeignKey, Boolean, TIMESTAMP
+from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-from app.core.database import Base
-from app.core.base_model import DefaultModel  
+from typing import TYPE_CHECKING
 
-class Unidade(DefaultModel, Base): 
-    __tablename__ = "unidades_requisitantes"
-    
-    nome: Mapped[str] = mapped_column(String(255), unique=True)
-    sigla: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    codigo_administrativo: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    
-    id_unidade_pai: Mapped[int | None] = mapped_column(ForeignKey("unidades_requisitantes.id"), nullable=True)
-    
-    unidade_pai: Mapped["Unidade"] = relationship("Unidade", remote_side="Unidade.id", lazy="selectin")
-    
+from app.core.database import Base
+from app.core.base_model import DefaultModel
+
+if TYPE_CHECKING:
+    from app.models.core.user_model import User
+
+class Unidade(DefaultModel, Base):
+    """
+    Representa as Unidades Requisitantes.
+    Agora suporta relação N:N com Usuários.
+    """
+    __tablename__ = "unidades"
+
+    nome: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    sigla: Mapped[str] = mapped_column(String(20), nullable=True)
+    codigo_interno: Mapped[str | None] = mapped_column(String(50), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
-    
-    data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
+
+    # Relacionamento Reverso Múltiplo
+    users: Mapped[list["User"]] = relationship(
+        "User", 
+        secondary="usuarios_unidades", 
+        back_populates="unidades"
+    )
+
+    def __repr__(self):
+        return f"<Unidade {self.nome}>"

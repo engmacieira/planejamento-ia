@@ -1,43 +1,51 @@
-from datetime import date
-from sqlalchemy import String, Integer, Boolean, ForeignKey, TIMESTAMP
+from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-from werkzeug.security import check_password_hash
-from app.core.database import Base
-from app.core.base_model import DefaultModel  
-
 from typing import TYPE_CHECKING
 
+from app.core.database import Base
+from app.core.base_model import DefaultModel
+
+# Precisamos importar o modelo de associação para o SQLAlchemy saber que ele existe
+# Mas usamos import condicional ou string para evitar erro circular
 if TYPE_CHECKING:
-    from app.models.planejamento.template_model import Template
-    from app.models.core.log_documento_model import GenerationLog
-    from app.models.planejamento.processo_documento_model import ProcessoDocumento
+    from app.models.core.unidade_model import Unidade
+    from app.models.core.perfil_model import Perfil
+    from app.models.core.log_documento_model import LogDocumento
 
 class User(DefaultModel, Base):
+    """
+    Representa o Usuário do Sistema (Login).
+    """
     __tablename__ = "usuarios"
-    
-    id_perfil: Mapped[int | None] = mapped_column(ForeignKey("perfis.id"), nullable=True)
-    
-    username: Mapped[str] = mapped_column(String(50), unique=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(255))
-    
-    nome_completo: Mapped[str] = mapped_column(String(255))
-    cpf: Mapped[str | None] = mapped_column(String(11), unique=True, nullable=True)
-    telefone: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    
-    ativo: Mapped[bool] = mapped_column(Boolean, default=True)
-    ultimo_login: Mapped[date | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
-    
-    data_criacao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
 
-    templates: Mapped[list["Template"]] = relationship("Template", back_populates="owner")
-    logs: Mapped[list["GenerationLog"]] = relationship("GenerationLog", back_populates="user")
-    processos: Mapped[list["ProcessoDocumento"]] = relationship("ProcessoDocumento", back_populates="owner")
+    # Credenciais
+    username: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    nome_completo: Mapped[str] = mapped_column(String(255), nullable=False)
+    
+    # Controle de Acesso (Diferença Importante)
+    # is_active = False -> Usuário bloqueado (ex: férias, licença), mas histórico visível.
+    # is_deleted = True -> Usuário excluído (ex: erro de cadastro), sumiu do sistema.
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    # Relacionamentos
+    
+    # 1. Perfil (Nível de Acesso - Admin, Gestor...)
+    perfil_id: Mapped[int | None] = mapped_column(ForeignKey("perfis.id"), nullable=True)
+    perfil: Mapped["Perfil"] = relationship("Perfil", back_populates="users", lazy="selectin")
 
-    def verificar_senha(self, senha_pura: str) -> bool:
-        return check_password_hash(self.password_hash, senha_pura)
+    # 2. Unidades (Secretarias onde trabalha - Agora Múltiplas!)
+    unidades: Mapped[list["Unidade"]] = relationship(
+        "Unidade", 
+        secondary="usuarios_unidades", 
+        back_populates="users",
+        lazy="selectin" # Carrega as unidades automaticamente ao buscar o usuário
+    )
 
-    @property
-    def is_active(self) -> bool:
-        return self.ativo
+    # 3. Logs
+    logs: Mapped[list["LogDocumento"]] = relationship("LogDocumento", back_populates="user")
+
+    def __repr__(self):
+        return f"<User {self.username} (Ativo: {self.is_active})>"

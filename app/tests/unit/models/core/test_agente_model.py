@@ -1,43 +1,61 @@
+import pytest
+from sqlalchemy.exc import IntegrityError
 from app.models.core.agente_model import Agente
 
-from app.models.core.agente_model import Agente
+# Marca o arquivo todo para rodar com asyncio
+pytestmark = pytest.mark.asyncio
 
-def test_agente_model_initialization():
+async def test_create_agente(db_session):
     """
-    Testa a inicialização do Agente e a herança do DefaultModel.
+    Testa a criação de um Agente com todos os campos.
     """
-    nome = "James Bond"
-    cpf = "00700700707"
-    email = "007@mi6.com"
-    cargo = "Espião"
-    
-    agente = Agente(
-        nome=nome,
-        cpf=cpf,
-        email=email,
-        cargo=cargo,
-        ativo=True, 
-        is_deleted=False
-    )
-
-    assert agente.nome == nome
-    assert agente.cpf == cpf
-    assert agente.cargo == cargo
-    
-    assert agente.ativo is True  
-    assert agente.is_deleted is False
-    assert agente.email == email
-
-def test_agente_nullable_fields():
-    """
-    Verifica se campos opcionais aceitam None.
-    """
-    agente = Agente(
-        nome="Recruta Zero",
-        cpf="11111111111",
-        matricula=None,
-        telefone=None
+    novo_agente = Agente(
+        nome="João da Silva",
+        cpf="12345678900",
+        email="joao@teste.com",
+        telefone="11999999999",
+        matricula="12345",
+        cargo="Fiscal de Contrato",
+        ativo=True
     )
     
-    assert agente.matricula is None
-    assert agente.telefone is None
+    db_session.add(novo_agente)
+    await db_session.commit()
+    await db_session.refresh(novo_agente)
+
+    assert novo_agente.id is not None
+    assert novo_agente.nome == "João da Silva"
+    assert novo_agente.created_at is not None  # Valida herança do DefaultModel
+    assert novo_agente.is_deleted is False     # Valida Soft Delete padrão
+
+async def test_agente_cpf_unique(db_session):
+    """
+    Garante que não é possível criar dois agentes com o mesmo CPF.
+    """
+    agente1 = Agente(nome="Agente 1", cpf="11111111111")
+    db_session.add(agente1)
+    await db_session.commit()
+
+    agente2 = Agente(nome="Agente 2", cpf="11111111111") # CPF Duplicado
+    db_session.add(agente2)
+
+    with pytest.raises(IntegrityError):
+        await db_session.commit()
+    
+    await db_session.rollback()
+
+async def test_agente_business_status(db_session):
+    """
+    Testa a diferença entre 'ativo' (negócio) e 'is_deleted' (sistema).
+    Um agente pode estar inativo (aposentado) mas existir no sistema.
+    """
+    agente = Agente(
+        nome="Agente Aposentado",
+        cpf="22222222222",
+        ativo=False  # Inativo no negócio
+    )
+    db_session.add(agente)
+    await db_session.commit()
+
+    assert agente.ativo is False
+    assert agente.is_deleted is False # Ainda existe no banco

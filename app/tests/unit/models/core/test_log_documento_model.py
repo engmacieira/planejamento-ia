@@ -1,36 +1,63 @@
-from app.models.core.log_documento_model import GenerationLog
+import pytest
+from app.models.core.log_documento_model import LogDocumento
+from app.models.core.user_model import User
 
-def test_generation_log_initialization():
+# Marca o arquivo todo para rodar com asyncio
+pytestmark = pytest.mark.asyncio
+
+async def test_create_log_ia(db_session):
     """
-    Testa a inicialização do Log de Geração de Documentos e a herança.
+    Testa a criação de um log de geração com dados de IA.
     """
-    filename = "edital_concluido_v1.docx"
-    user_id = 42
-    template_id = 10
-    
-    log = GenerationLog(
-        generated_filename=filename,
-        user_id=user_id,
-        template_id=template_id,
-        # Default explícito para teste em memória
-        is_deleted=False
+    # Precisamos de um usuário para vincular
+    user = User(
+        username="ia_tester", 
+        email="ia@test.com", 
+        password_hash="123", 
+        nome_completo="IA Tester"
     )
+    db_session.add(user)
+    await db_session.commit()
 
-    assert log.generated_filename == filename
-    assert log.user_id == user_id
-    assert log.template_id == template_id
-    
-    assert log.is_deleted is False
-
-def test_generation_log_relationships_ids():
-    """
-    Verifica se as Foreign Keys estão sendo atribuídas corretamente.
-    (Teste de estrutura, não de integridade referencial de banco).
-    """
-    log = GenerationLog(
-        user_id=99,
-        template_id=50
+    # Cria o Log
+    log = LogDocumento(
+        nome_arquivo_gerado="Minuta_Contrato_v1.docx",
+        ia_model="gemini-1.5-pro",
+        tokens_utilizados=1540,
+        parametros_usados={"objeto": "Computadores", "valor": 50000},
+        user_id=user.id
     )
     
-    assert log.user_id == 99
-    assert log.template_id == 50
+    db_session.add(log)
+    await db_session.commit()
+    await db_session.refresh(log)
+
+    assert log.id is not None
+    assert log.ia_model == "gemini-1.5-pro"
+    assert log.parametros_usados["objeto"] == "Computadores"
+    assert log.user_id == user.id
+
+async def test_log_relationship_user(db_session):
+    """
+    Testa se o relacionamento back_populates com User está funcionando.
+    """
+    user = User(
+        username="log_user", 
+        email="log@test.com", 
+        password_hash="123", 
+        nome_completo="Log User"
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    log = LogDocumento(
+        nome_arquivo_gerado="Teste.pdf",
+        user_id=user.id
+    )
+    db_session.add(log)
+    await db_session.commit()
+
+    # Traz o user e verifica se o log está na lista (lazy loading)
+    await db_session.refresh(user, attribute_names=["logs"])
+    assert len(user.logs) == 1
+    assert user.logs[0].nome_arquivo_gerado == "Teste.pdf"

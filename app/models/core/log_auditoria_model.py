@@ -1,25 +1,39 @@
-from datetime import date
-from typing import Any
-from sqlalchemy import String, Integer, ForeignKey, Text, JSON, TIMESTAMP
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql import func
+from typing import Optional, Any
+from sqlalchemy import String, Integer, ForeignKey, JSON
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
-from app.core.base_model import DefaultModel  
+from app.core.base_model import DefaultModel
 
-class LogAuditoria(DefaultModel, Base): 
-    __tablename__ = "logs_auditoria"
+class LogAuditoria(DefaultModel, Base):
+    """
+    Tabela de Auditoria do Sistema (Audit Trail).
+    Registra todas as ações críticas (CREATE, UPDATE, DELETE) realizadas pelos usuários.
     
-    id_usuario: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
-    username_snapshot: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    Regras de Negócio:
+    - Imutabilidade: Logs não devem ser alterados (embora o banco permita, a aplicação não deve expor rota de update).
+    - Rastreabilidade: Deve salvar o estado anterior e posterior do objeto alterado (Snapshot).
+    """
+    __tablename__ = "log_auditoria"
+
+    # Quem fez?
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"), nullable=True, comment="Null caso seja ação do sistema")
     
-    data_acao: Mapped[date] = mapped_column(TIMESTAMP(timezone=True), server_default=func.current_timestamp())
-    ip_origem: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    # O que fez?
+    acao: Mapped[str] = mapped_column(String(50), nullable=False, comment="Ex: CREATE, UPDATE, DELETE, LOGIN, EXPORT")
+    entidade: Mapped[str] = mapped_column(String(100), nullable=False, comment="Nome da tabela afetada (ex: Contrato)")
+    entidade_id: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="ID do registro afetado")
     
-    tabela_afetada: Mapped[str] = mapped_column(String(100))
-    id_registro_afetado: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    tipo_acao: Mapped[str] = mapped_column(String(20)) # EX: CREATE, UPDATE, DELETE
+    # O que mudou? (Snapshots)
+    dados_anteriores: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, comment="Estado antes da alteração")
+    dados_novos: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, comment="Estado depois da alteração")
     
-    dados_antigos: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    dados_novos: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    
-    descricao_legivel: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Metadados Técnicos
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Relacionamentos
+    # Nota: Usamos string "User" para evitar import circular, pois User pode importar LogAuditoria no futuro
+    usuario = relationship("User", foreign_keys=[usuario_id], lazy="selectin")
+
+    def __repr__(self):
+        return f"<LogAuditoria {self.acao} em {self.entidade} por User {self.usuario_id}>"

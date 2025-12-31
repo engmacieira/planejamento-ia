@@ -1,44 +1,49 @@
+import pytest
 from app.models.core.log_auditoria_model import LogAuditoria
 
-def test_log_auditoria_initialization():
-    """
-    Testa a inicialização de um Log de Auditoria, focando no suporte a JSON
-    e na herança do DefaultModel.
-    """
-    tabela = "contratos"
-    acao = "UPDATE"
-    dados_velhos = {"valor": 1000, "status": "rascunho"}
-    dados_novos = {"valor": 1200, "status": "ativo"}
-    
-    log = LogAuditoria(
-        tabela_afetada=tabela,
-        tipo_acao=acao,
-        dados_antigos=dados_velhos,
-        dados_novos=dados_novos,
-        username_snapshot="admin_user",
-        is_deleted=False
-    )
+# Marca o arquivo todo para rodar com asyncio
+pytestmark = pytest.mark.asyncio
 
-    assert log.tabela_afetada == tabela
-    assert log.tipo_acao == acao
-    
-    assert log.dados_antigos == dados_velhos
-    assert log.dados_novos == dados_novos
-    assert log.dados_antigos["valor"] == 1000
-    
-    assert log.is_deleted is False
-
-def test_log_auditoria_nullable_json():
+async def test_create_log_auditoria(db_session):
     """
-    Garante que podemos criar logs sem dados detalhados (ex: DELETE sem dados novos).
+    Testa a criação de um log de auditoria simples.
     """
-    log = LogAuditoria(
-        tabela_afetada="usuarios",
-        tipo_acao="DELETE",
-        dados_antigos={"id": 1, "nome": "User Deletado"},
-        dados_novos=None, 
-        is_deleted=False
+    novo_log = LogAuditoria(
+        usuario_id=None, # Ação do sistema
+        acao="CREATE",
+        entidade="Contrato",
+        entidade_id="100",
+        ip_address="127.0.0.1"
     )
     
-    assert log.dados_novos is None
-    assert log.dados_antigos is not None
+    db_session.add(novo_log)
+    await db_session.commit()
+    await db_session.refresh(novo_log)
+
+    assert novo_log.id is not None
+    assert novo_log.acao == "CREATE"
+    assert novo_log.created_at is not None
+
+async def test_log_json_storage(db_session):
+    """
+    Testa se o banco consegue armazenar e recuperar dicionários JSON nos campos de snapshot.
+    Isso é vital para o recurso de 'Ver Histórico de Alterações'.
+    """
+    snapshot_anterior = {"valor": 1000, "status": "Rascunho"}
+    snapshot_novo = {"valor": 1000, "status": "Ativo"}
+
+    log = LogAuditoria(
+        acao="UPDATE",
+        entidade="Contrato",
+        dados_anteriores=snapshot_anterior,
+        dados_novos=snapshot_novo
+    )
+    
+    db_session.add(log)
+    await db_session.commit()
+    await db_session.refresh(log)
+
+    # Verifica se recuperou como dict (Python) e se os valores batem
+    assert log.dados_anteriores["status"] == "Rascunho"
+    assert log.dados_novos["status"] == "Ativo"
+    assert isinstance(log.dados_novos, dict)
